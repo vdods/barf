@@ -13,8 +13,8 @@ list(GET VERSION_LIST 0 barf_VERSION_MAJOR)
 list(GET VERSION_LIST 1 barf_VERSION_MINOR)
 list(GET VERSION_LIST 2 barf_VERSION_PATCH)
 
-# Set and require the C++11 standard
-set(CMAKE_CXX_STANDARD 11)
+# Set and require the C++14 standard
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # This includes the reflex and trison source file rules (for generating C++).
@@ -42,6 +42,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 # should be checked into the source repo and stay there, only being re-generated
 # if the corresponding reflex or trison source (or other source files) changes.
 set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM true)
+
+option(BUILD_barftest "Build barftest binary (unnecessary for `make package`)" ON)
 
 option(barf_DEVELOPER_MODE "Enable (and require) barf developer configuration options; requires having a stable version of barf installed already, which will be used to build the barf parsers and scanners in a self-hosting manner.  Not necessary to simply build this package from source." OFF)
 if(barf_DEVELOPER_MODE)
@@ -392,6 +394,138 @@ target_link_libraries(dev_barf_regex PUBLIC Strict dev_barf_core)
 ###############################################################################
 # Executables
 ###############################################################################
+
+#
+# barftest
+#
+
+if(BUILD_barftest)
+    find_package(lvd REQUIRED 0.7.0)
+
+    if(barf_DEVELOPER_MODE)
+        reflex_add_source(${barf_SOURCE_DIR}/bin/barftest/text/Scanner.reflex ${barf_SOURCE_DIR}/bin/barftest/text barftest_text_Scanner "${PROJECT_BINARY_DIR}")
+        trison_add_source(${barf_SOURCE_DIR}/bin/barftest/text/Parser.trison ${barf_SOURCE_DIR}/bin/barftest/text barftest_text_Parser "${PROJECT_BINARY_DIR}")
+    endif()
+
+    set(barftest_SOURCES
+
+        bin/barftest/core.hpp
+        bin/barftest/Exception.cpp
+        bin/barftest/Exception.hpp
+        bin/barftest/FiLoc.hpp
+        bin/barftest/FiPos.hpp
+        bin/barftest/FiRange.hpp
+        bin/barftest/InputBase.cpp
+        bin/barftest/InputBase.hpp
+        bin/barftest/literal.hpp
+        bin/barftest/Log.hpp
+        bin/barftest/main.cpp
+
+        bin/barftest/parser__declaration_statement.cpp
+        bin/barftest/parser__expression.cpp
+        bin/barftest/parser__expression_then_end.cpp
+        bin/barftest/parser__expression_then_lookahead_end.cpp
+        bin/barftest/parser__function_literal.cpp
+        bin/barftest/parser__function_prototype.cpp
+        bin/barftest/parser__function_type_then_end.cpp
+        bin/barftest/parser__id_list.cpp
+        bin/barftest/parser__id_list_then_end.cpp
+        bin/barftest/parser__lookahead_test_expression.cpp
+        bin/barftest/parser__parenthesized_id_list.cpp
+        bin/barftest/parser__root.cpp
+        bin/barftest/parser__statement.cpp
+        bin/barftest/parser__statement_list.cpp
+        bin/barftest/parser__statement_list_then_end.cpp
+        bin/barftest/parser__statement_then_end.cpp
+        bin/barftest/parser__type_expression.cpp
+        bin/barftest/UnitTestParser.cpp
+        bin/barftest/UnitTestParser.hpp
+
+        bin/barftest/sem/Assignment.cpp
+        bin/barftest/sem/Assignment.hpp
+        bin/barftest/sem/Base.hpp
+        bin/barftest/sem/BinaryOperation.cpp
+        bin/barftest/sem/BinaryOperation.hpp
+        bin/barftest/sem/Break.cpp
+        bin/barftest/sem/Break.hpp
+        bin/barftest/sem/Conditional.cpp
+        bin/barftest/sem/Conditional.hpp
+        bin/barftest/sem/Declaration.cpp
+        bin/barftest/sem/Declaration.hpp
+        bin/barftest/sem/Definition.cpp
+        bin/barftest/sem/Definition.hpp
+        bin/barftest/sem/Determinability.cpp
+        bin/barftest/sem/Determinability.hpp
+        bin/barftest/sem/Dummy.cpp
+        bin/barftest/sem/Dummy.hpp
+        bin/barftest/sem/ElementAccess.cpp
+        bin/barftest/sem/ElementAccess.hpp
+        bin/barftest/sem/ErrorDummy.cpp
+        bin/barftest/sem/ErrorDummy.hpp
+        bin/barftest/sem/ExpressionKind.cpp
+        bin/barftest/sem/ExpressionKind.hpp
+        bin/barftest/sem/Function.cpp
+        bin/barftest/sem/FunctionEvaluation.cpp
+        bin/barftest/sem/FunctionEvaluation.hpp
+        bin/barftest/sem/Function.hpp
+        bin/barftest/sem/FunctionPrototype.cpp
+        bin/barftest/sem/FunctionPrototype.hpp
+        bin/barftest/sem/FunctionType.cpp
+        bin/barftest/sem/FunctionType.hpp
+        bin/barftest/sem/GlobalValueLinkage.cpp
+        bin/barftest/sem/GlobalValueLinkage.hpp
+        bin/barftest/sem/Identifier.cpp
+        bin/barftest/sem/Identifier.hpp
+        bin/barftest/sem/Initialization.cpp
+        bin/barftest/sem/Initialization.hpp
+        bin/barftest/sem/LLVMCast.cpp
+        bin/barftest/sem/LLVMCast.hpp
+        bin/barftest/sem/Loop.cpp
+        bin/barftest/sem/Loop.hpp
+        bin/barftest/sem/NullPtr.cpp
+        bin/barftest/sem/NullPtr.hpp
+        bin/barftest/sem/PointerType.cpp
+        bin/barftest/sem/PointerType.hpp
+        bin/barftest/sem/ReferenceType.cpp
+        bin/barftest/sem/ReferenceType.hpp
+        bin/barftest/sem/Return.cpp
+        bin/barftest/sem/Return.hpp
+        bin/barftest/sem/Specifier.hpp
+        bin/barftest/sem/StringLiteral.cpp
+        bin/barftest/sem/StringLiteral.hpp
+        bin/barftest/sem/SymbolSpecifier.cpp
+        bin/barftest/sem/SymbolSpecifier.hpp
+        bin/barftest/sem/TypeArray.cpp
+        bin/barftest/sem/TypeArray.hpp
+        bin/barftest/sem/Type.cpp
+        bin/barftest/sem/TypeEnum.cpp
+        bin/barftest/sem/TypeEnum.hpp
+        bin/barftest/sem/Type.hpp
+        bin/barftest/sem/TypeIdentifier.cpp
+        bin/barftest/sem/TypeIdentifier.hpp
+        bin/barftest/sem/UnaryOperation.cpp
+        bin/barftest/sem/UnaryOperation.hpp
+        bin/barftest/sem/Value.cpp
+        bin/barftest/sem/Value.hpp
+        bin/barftest/sem/ValueKind.cpp
+        bin/barftest/sem/ValueKind.hpp
+        bin/barftest/sem/ValueLifetime.cpp
+        bin/barftest/sem/ValueLifetime.hpp
+        bin/barftest/sem/Vector.cpp
+        bin/barftest/sem/Vector.hpp
+
+        bin/barftest/text/Parser.cpp
+        bin/barftest/text/Parser.hpp
+        bin/barftest/text/Parser.trison
+        bin/barftest/text/Scanner.cpp
+        bin/barftest/text/Scanner.hpp
+        bin/barftest/text/Scanner.reflex
+    )
+    add_executable(barftest ${barftest_SOURCES})
+    target_include_directories(barftest PUBLIC ${barf_SOURCE_DIR}/bin/barftest)
+    target_compile_definitions(barftest PUBLIC PACKAGE_VERSION="${barf_VERSION}")
+    target_link_libraries(barftest PUBLIC Strict lvd)
+endif()
 
 #
 # bpp (BARF Pre-Processor)

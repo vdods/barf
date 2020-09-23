@@ -1,0 +1,1818 @@
+// 2015.01.24 - Victor Dods
+
+%targets cpp
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser header-file-related directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%target.cpp.header_filename "Parser.hpp"
+%target.cpp.implementation_filename "Parser.cpp"
+
+%target.cpp.default_max_allowable_lookahead_count "1"
+// %target.cpp.default_max_allowable_parse_tree_depth "9"
+
+%target.cpp.top_of_header_file %{
+#include "core.hpp"
+#include "FiLoc.hpp"
+#include "FiPos.hpp"
+#include "FiRange.hpp"
+#include <lvd/Log.hpp>
+#include <memory>
+#include "sem/Dummy.hpp"
+
+namespace cbz {
+namespace text {
+
+class Scanner;
+
+// static_cast but for gsl::not_null<std::unique_ptr<T>>.  This assumes Target_ has the form
+// gsl::not_null<std::unique_ptr<T>> and is really just an adapter to static_move_cast.
+template <typename Target_, typename SourceT_, typename Delete_>
+Target_ parser_static_move_cast (gsl::not_null<std::unique_ptr<SourceT_,Delete_>> &&p) {
+    return Target_{lvd::static_move_cast<typename std::pointer_traits<Target_>::element_type>(p)};
+}
+%}
+%target.cpp.class_name Parser
+%target.cpp.bottom_of_class {
+    static std::string TokenIdAsString (Token::Id token_id);
+
+    FiLoc filoc () const;
+    FiPos const &fipos () const;
+
+    bool ScannerDebugSpewIsEnabled () const;
+    std::ostream *ScannerDebugSpewStream () const;
+    void SetScannerDebugSpewStream (std::ostream *debug_spew_stream);
+
+    bool open_file (std::string const &input_filename);
+    void open_string (std::string const &input_string, std::string const &input_name, bool use_line_numbers = false);
+    void open_using_stream (std::istream *input_stream, std::string const &input_name, bool use_line_numbers);
+
+    Log *log_out () { return m_log_out; }
+    void log_out (Log *log_out) { m_log_out = log_out; }
+
+    bool recoverable_error_encountered () const { return m_recoverable_error_encountered; }
+
+    void record_message (FiRange const &firange, std::string const &message);
+    // TODO: Maybe get rid of this function in preference of FiRange one.
+    void record_recoverable_error (FiLoc const &filoc, std::string const &message);
+    void record_recoverable_error (FiRange const &firange, std::string const &message);
+
+private:
+
+    up<Scanner> m_scanner;
+    Log *m_log_out;
+    bool m_recoverable_error_encountered;
+}
+%target.cpp.bottom_of_header_file %{
+} // end namespace text
+} // end namespace cbz
+%}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser implementation-file-related directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%target.cpp.top_of_implementation_file %{
+#include "cbz/literal.hpp"
+#include "sem/Assignment.hpp"
+#include "sem/BinaryOperation.hpp"
+#include "sem/Break.hpp"
+#include "sem/Conditional.hpp"
+#include "sem/Declaration.hpp"
+#include "sem/Definition.hpp"
+#include "sem/Dummy.hpp"
+#include "sem/ElementAccess.hpp"
+#include "sem/ErrorDummy.hpp"
+#include "sem/Function.hpp"
+#include "sem/FunctionEvaluation.hpp"
+#include "sem/FunctionPrototype.hpp"
+#include "sem/FunctionType.hpp"
+#include "sem/Identifier.hpp"
+#include "sem/Initialization.hpp"
+#include "sem/LLVMCast.hpp"
+#include "sem/Loop.hpp"
+#include "sem/NullPtr.hpp"
+#include "sem/PointerType.hpp"
+#include "sem/ReferenceType.hpp"
+#include "sem/Return.hpp"
+#include "sem/Specifier.hpp"
+#include "sem/SymbolSpecifier.hpp"
+#include "sem/Type.hpp"
+#include "sem/TypeIdentifier.hpp"
+#include "sem/UnaryOperation.hpp"
+#include "sem/Vector.hpp"
+#include "cbz/text/Scanner.hpp"
+
+namespace cbz {
+namespace text {
+%}
+%target.cpp.constructor_actions {
+    m_scanner = std::make_unique<Scanner>();
+    // Passing `this` within this closure is fine because this Parser instance
+    // will live beyond m_scanner.
+    m_scanner->set_handler__record_message(
+        [this](FiRange const &firange, std::string const &message){
+            this->record_message(firange, message);
+        }
+    );
+    m_scanner->set_handler__record_recoverable_error(
+        [this](FiRange const &firange, std::string const &message){
+            this->record_recoverable_error(firange, message);
+        }
+    );
+    m_log_out = nullptr;
+    m_recoverable_error_encountered = false;
+}
+%target.cpp.destructor_actions {
+}
+%target.cpp.top_of_parse_method_actions %{
+    assert(m_scanner != nullptr);
+    record_message(m_scanner->firange(), "starting parser");
+%}
+%target.cpp.bottom_of_parse_method_actions %{
+    if (parse_return_code == PRC_SUCCESS)
+        record_message(m_scanner->firange(), "parse was successful");
+%}
+%target.cpp.bottom_of_implementation_file %{
+std::string Parser::TokenIdAsString (Token::Id token_id)
+{
+    assert(token_id <= ms_token_name_count_);
+    if (0 <= token_id && token_id < 256)
+        return char_literal_of(static_cast<uint8_t>(token_id));
+
+    switch (token_id)
+    {
+        // These cases are really just to provide the syntactical representation of the terminals.
+        case Terminal::AND:                 return std::string("and");
+        case Terminal::ASSIGN:              return std::string("=");
+        case Terminal::BAD_TOKEN:           return std::string("<bad-token>");
+        case Terminal::BOOLEAN:             return std::string("Boolean");
+        case Terminal::BREAK:               return std::string("break");
+        case Terminal::CT:                  return std::string("ct");
+        case Terminal::DEFINE:              return std::string(":=");
+        case Terminal::DO:                  return std::string("do");
+        case Terminal::END_:                return std::string("%end");
+        case Terminal::END_OF_FILE:         return std::string("<end-of-file>");
+        case Terminal::EQUALS:              return std::string("==");
+        case Terminal::ERROR_:              return std::string("%error");
+        case Terminal::EXTERNAL:            return std::string("external");
+        case Terminal::FLOAT32:             return std::string("Float32");
+        case Terminal::FLOAT64:             return std::string("Float64");
+        case Terminal::GLOBAL:              return std::string("global");
+        case Terminal::GREATER_OR_EQUAL:    return std::string(">=");
+        case Terminal::GREATER_THAN:        return std::string(">");
+        case Terminal::IDENTIFIER:          return std::string("<identifier>"); // This shouldn't really be used in this manner.
+        case Terminal::IF:                  return std::string("if");
+        case Terminal::INTERNAL:            return std::string("internal");
+        case Terminal::LESS_OR_EQUAL:       return std::string("<=");
+        case Terminal::LESS_THAN:           return std::string("<");
+        case Terminal::LLVM_CAST_KEYWORD:   return std::string("__llvm_cast_<instr>__"); // This shouldn't really be used in this manner.
+        case Terminal::LOCAL:               return std::string("local");
+        case Terminal::MAPS_TO:             return std::string("->");
+        case Terminal::NOT:                 return std::string("not");
+        case Terminal::NOT_EQUALS:          return std::string("!=");
+        case Terminal::NULLPTR:             return std::string("__nullptr__");
+        case Terminal::OR:                  return std::string("or");
+        case Terminal::OTHERWISE:           return std::string("otherwise");
+        case Terminal::PRIVATE:             return std::string("private");
+        case Terminal::RETURN:              return std::string("return");
+        case Terminal::RT:                  return std::string("rt");
+        case Terminal::SINT16:              return std::string("Sint16");
+        case Terminal::SINT32:              return std::string("Sint32");
+        case Terminal::SINT64:              return std::string("Sint64");
+        case Terminal::SINT8:               return std::string("Sint8");
+        case Terminal::STATEMENT_DELIMITER: return std::string(";");
+        case Terminal::THEN:                return std::string("then");
+        case Terminal::TYPE_KEYWORD:        return std::string("Type");
+        case Terminal::UINT16:              return std::string("Uint16");
+        case Terminal::UINT32:              return std::string("Uint32");
+        case Terminal::UINT64:              return std::string("Uint64");
+        case Terminal::UINT8:               return std::string("Uint8");
+        case Terminal::VALUE_LITERAL:       return std::string("<value-literal>"); // This shouldn't really be used in this manner.
+        case Terminal::VOID_TYPE:           return std::string("Void");
+        case Terminal::WHILE:               return std::string("while");
+        case Terminal::XOR:                 return std::string("xor");
+
+        // Nonterminals are handled this way (except for Nonterminal::none_, which is a sentinel value)
+        default:                            return std::string(ms_token_name_table_[token_id]);
+    }
+}
+
+FiLoc Parser::filoc () const
+{
+    assert(m_scanner != nullptr);
+    return m_scanner->filoc();
+}
+
+FiPos const &Parser::fipos () const
+{
+    assert(m_scanner != nullptr);
+    return m_scanner->fipos();
+}
+
+bool Parser::ScannerDebugSpewIsEnabled () const
+{
+    return m_scanner->DebugSpewIsEnabled();
+}
+
+std::ostream *Parser::ScannerDebugSpewStream () const
+{
+    return m_scanner->DebugSpewStream();
+}
+
+void Parser::SetScannerDebugSpewStream (std::ostream *debug_spew_stream)
+{
+    m_scanner->SetDebugSpewStream(debug_spew_stream);
+}
+
+bool Parser::open_file (std::string const &input_filename)
+{
+    assert(m_scanner != nullptr);
+    ResetForNewInput();
+    record_message(m_scanner->firange(), "opening file \"" + input_filename + "\" for input");
+    bool scanner_open_file_succeeded = m_scanner->open_file(input_filename);
+    if (scanner_open_file_succeeded)
+        record_message(m_scanner->firange(), "opened file \"" + input_filename + "\" successfully");
+    return scanner_open_file_succeeded;
+}
+
+void Parser::open_string (std::string const &input_string, std::string const &input_name, bool use_line_numbers)
+{
+    assert(m_scanner != nullptr);
+    ResetForNewInput();
+    return m_scanner->open_string(input_string, input_name, use_line_numbers);
+}
+
+void Parser::open_using_stream (std::istream *input_stream, std::string const &input_name, bool use_line_numbers)
+{
+    assert(m_scanner != nullptr);
+    ResetForNewInput();
+    return m_scanner->open_using_stream(input_stream, input_name, use_line_numbers);
+}
+
+void Parser::record_message (FiRange const &firange, std::string const &message)
+{
+    if (m_log_out != nullptr)
+        *m_log_out << Log::inf() << (firange.is_valid() ? firange.as_string()+": " : std::string()) << message << '\n';
+}
+
+void Parser::record_recoverable_error (FiLoc const &filoc, std::string const &message)
+{
+    m_recoverable_error_encountered = true;
+    if (m_log_out != nullptr)
+        *m_log_out << Log::err() << (filoc.is_valid() ? filoc.as_string()+": " : std::string()) << message << '\n';
+}
+
+void Parser::record_recoverable_error (FiRange const &firange, std::string const &message)
+{
+    m_recoverable_error_encountered = true;
+    if (m_log_out != nullptr)
+        *m_log_out << Log::err() << (firange.is_valid() ? firange.as_string()+": " : std::string()) << message << '\n';
+}
+
+} // end namespace text
+} // end namespace cbz
+%}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser token-specific directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%target.cpp.token_data_type "nnup<sem::Base>"
+// Use move semantics because nnup<T> can only be moved, not copy-constructed.
+%target.cpp.token_data_type_only_uses_move_semantics
+// This is a little kludgey, since it involves an allocation, but it shouldn't happen a lot.
+// Ideally we'd use nullptr, but we're using nnup<T> (i.e. not_null<...>), so it has to be something.
+%target.cpp.token_data_default "parser_static_move_cast<nnup<sem::Base>>(sem::make_dummy())"
+// This is a custom static cast for nnup<T> (aka gsl::not_null<std::unique_ptr<T>>).
+%target.cpp.custom_token_data_type_cast "parser_static_move_cast"
+// %target.cpp.ostream_print_token_data {
+//     return stream << token_data;
+// }
+
+%target.cpp.throw_away_token_actions { } // none are necessary because nnup is used
+%target.cpp.insert_lookahead_error_actions {
+    // Make a 0-char FiRange from the start of the lookahead's FiRange to use for the error.
+    return sem::make_error_dummy(noconsume_lookahead_token.m_data->firange().start_as_firange());
+}
+%target.cpp.discard_lookahead_actions {
+    // Use the union of the FiRanges for the stack top and lookahead for the error.
+    // No need to delete anything, since we're using nnup.
+    assert(consume_lookahead_token.m_id != Terminal::END_);
+    return sem::make_error_dummy(firange_of(consume_lookahead_token.m_data) + firange_of(consume_stack_top_error_token.m_data));
+}
+%target.cpp.pop_stack_1_actions {
+    // Use the union of the FiRanges for the stack top and lookahead for the error.
+    // No need to delete anything, since we're using nnup.
+    return sem::make_error_dummy(firange_of(consume_lookahead_token.m_data) + firange_of(consume_stack_top_tokens[0].m_data));
+}
+%target.cpp.pop_stack_2_actions {
+    // Use the union of the FiRanges for the 2 top stack tokens for the error.
+    // No need to delete anything, since we're using nnup.
+    assert(consume_stack_top_tokens.size() == 2);
+    return sem::make_error_dummy(firange_of(consume_stack_top_tokens[0].m_data) + firange_of(consume_stack_top_tokens[1].m_data));
+}
+%target.cpp.scan_actions {
+    assert(m_scanner != nullptr);
+    return m_scanner->Scan();
+}
+%target.cpp.nonassoc_error_actions {
+    auto err = sem::make_error_dummy(noconsume_lookahead_token.m_data->firange().start_as_firange());
+    record_recoverable_error(err->firange(), "operator " + TokenIdAsString(noconsume_lookahead_token.m_id) + " is non-associative and therefore can't be composed; use parentheses to disambiguate the expression if this usage is not a mistake");
+    return err;
+}
+%target.cpp.reset_for_new_input_actions {
+    m_recoverable_error_encountered = false;
+}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser misc directives
+// ///////////////////////////////////////////////////////////////////////////
+
+// TEMP HIPPO
+// %target.cpp.enable_scan_actions_exceptions
+// %target.cpp.enable_reduction_rule_exceptions
+
+// this adds a lot of string content to parser source
+%target.cpp.generate_debug_spew_code
+%target.cpp.debug_spew_prefix {"Parser" << (filoc().is_valid() ? " ("+filoc().as_string()+")" : std::string()) << ": "}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser terminal directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%terminal '+' '-' '*' '/' '%' '^' '&'       %type.cpp "nnup<sem::Dummy>"
+%terminal '@' '#' FANCYOP                   %type.cpp "nnup<sem::Dummy>"
+%terminal '{' '}' '(' ')' '[' ']' ',' ':'   %type.cpp "nnup<sem::Dummy>"
+%terminal CT RT LOCAL GLOBAL                %type.cpp "nnup<sem::Dummy>"
+%terminal EXTERNAL INTERNAL PRIVATE         %type.cpp "nnup<sem::Dummy>"
+%terminal DEFINE INITIALIZE ASSIGN MAPS_TO  %type.cpp "nnup<sem::Dummy>"
+%terminal IF THEN OTHERWISE WHILE DO        %type.cpp "nnup<sem::Dummy>"
+%terminal STATEMENT_DELIMITER               %type.cpp "nnup<sem::Dummy>"
+%terminal EQUALS NOT_EQUALS                 %type.cpp "nnup<sem::Dummy>"
+%terminal LESS_THAN GREATER_THAN            %type.cpp "nnup<sem::Dummy>"
+%terminal LESS_OR_EQUAL GREATER_OR_EQUAL    %type.cpp "nnup<sem::Dummy>"
+%terminal NOT AND OR XOR                    %type.cpp "nnup<sem::Dummy>"
+%terminal NULLPTR                           %type.cpp "nnup<sem::Dummy>"
+%terminal BAD_TOKEN END_OF_FILE             %type.cpp "nnup<sem::Dummy>"
+
+%terminal BREAK                             %type.cpp "nnup<sem::Break>"
+%terminal RETURN                            %type.cpp "nnup<sem::Return>"
+%terminal IDENTIFIER                        %type.cpp "nnup<sem::Identifier>"
+%terminal BOOLEAN                           %type.cpp "nnup<sem::Boolean>"
+%terminal SINT8                             %type.cpp "nnup<sem::Sint8>"
+%terminal SINT16                            %type.cpp "nnup<sem::Sint16>"
+%terminal SINT32                            %type.cpp "nnup<sem::Sint32>"
+%terminal SINT64                            %type.cpp "nnup<sem::Sint64>"
+%terminal UINT8                             %type.cpp "nnup<sem::Uint8>"
+%terminal UINT16                            %type.cpp "nnup<sem::Uint16>"
+%terminal UINT32                            %type.cpp "nnup<sem::Uint32>"
+%terminal UINT64                            %type.cpp "nnup<sem::Uint64>"
+%terminal FLOAT32                           %type.cpp "nnup<sem::Float32>"
+%terminal FLOAT64                           %type.cpp "nnup<sem::Float64>"
+%terminal TYPE_KEYWORD                      %type.cpp "nnup<sem::TypeKeyword>"
+%terminal VALUE_LITERAL                     %type.cpp "nnup<sem::ValueBase>"
+%terminal VOID_TYPE                         %type.cpp "nnup<sem::VoidType>"
+%terminal NULL_TYPE                         %type.cpp "nnup<sem::NullType>"
+%terminal LLVM_CAST_KEYWORD                 %type.cpp "nnup<sem::LLVMCastKeyword>"
+%terminal STRING_LITERAL                    %type.cpp "nnup<sem::StringLiteral>"
+%terminal VALUE_KIND_SPECIFIER              %type.cpp "nnup<sem::ValueKindSpecifier>"
+%terminal VALUE_LIFETIME_SPECIFIER          %type.cpp "nnup<sem::ValueLifetimeSpecifier>"
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser precedence directives
+// ///////////////////////////////////////////////////////////////////////////
+
+// Lowest precedence is first, highest is last.
+
+%prec.right     SUPER_LOW // not sure if right or left matters
+%prec.left      %default
+%prec.right     INITIALIZATION          // INITIALIZE DEFINE
+%prec.right     ASSIGNMENT              // ASSIGN
+%prec.nonassoc  TYPE_DECLARATION        // ':'
+%prec.right     MAPPING                 // MAPS_TO
+%prec.left      CONDITIONAL_EXPRESSION  // `x IF y OTHERWISE z`
+%prec.left      LOGICAL_OR              // OR
+%prec.left      LOGICAL_XOR             // XOR
+%prec.left      LOGICAL_AND             // AND
+%prec.nonassoc  EQUALITY                // EQUALS NOT_EQUALS
+%prec.nonassoc  COMPARISON              // LESS_THAN GREATER_THAN LESS_OR_EQUAL GREATER_OR_EQUAL
+%prec.left      ADDITIVE                // '+' '-'
+%prec.left      MULTIPLICATIVE          // '*' '/' '%'
+%prec.left      LOW_UNARY               // CT RT LOCAL GLOBAL
+%prec.right     HIGH_UNARY              // '-' NOT
+%prec.right     EXPONENTIATION          // '^'
+%prec.right     POINTY                  // '@' '#'
+%prec.left      AGGREGATE_MULTIPLIER    // [Float64]*3
+// In order for function evaluation to work syntactically like C, this must be above the others.
+// For example, -f(x) should parse as -(f(x)) and not (-f)(x), and f(x)^2 should parse as
+// (f(x))^2 and not (f^2)(x) or f(x^2).  Obviously parens can be used to achieve whatever desired result.
+%prec.left      FUNCTION_EVALUATION     // `f(...)`
+
+%prec.left      TINNY
+%prec.left      SPLUNGITIVE
+%prec.left      WOODY
+%prec.left      DINSDALACIOUS
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp parser grammar specification
+// ///////////////////////////////////////////////////////////////////////////
+
+%default_parse_nonterminal root
+
+%%
+
+%nonterminal root
+:
+    statement_list:sl %end %target.cpp { return sl; }
+|
+    %end %target.cpp { return sem::make_statement_list(); }
+;
+
+%nonterminal expression_then_end
+:
+    expression:e %end %target.cpp { return e; }
+|
+    %error[!%end] %end %target.cpp { return sem::make_error_dummy(); }
+;
+
+%nonterminal expression_then_lookahead_end
+:
+    expression:e %lookahead[%end] %target.cpp { return e; }
+|
+    %error[!%end] %lookahead[%end] %target.cpp { return sem::make_error_dummy(); }
+;
+
+%nonterminal parenthesized_expression
+:
+    '(':open_paren expression:e parenthesized_expression_ender:ender
+    %target.cpp {
+        e->grow_firange(open_paren->firange());
+        e->grow_firange(ender->firange());
+        return e;
+    }
+|
+    '(':open_paren %error[![%end|')']]:err parenthesized_expression_ender:ender
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error in parenthesized expression");
+        err->grow_firange(open_paren->firange());
+        err->grow_firange(ender->firange());
+        return err;
+    }
+;
+
+%nonterminal parenthesized_expression_ender
+:
+    ')':dummy
+    %target.cpp {
+        return dummy;
+    }
+|
+    %empty %lookahead[%end|STATEMENT_DELIMITER]:la
+    %target.cpp {
+        auto error_dummy = sem::make_error_dummy(la.m_data->firange().start_as_firange());
+        record_recoverable_error(error_dummy->firange(), "unterminated parethesized expression -- missing ')'");
+        return error_dummy;
+    }
+;
+
+%nonterminal expression_tuple %type.cpp "nnup<sem::Tuple>"
+:
+    '[':open_bracket expression_tuple_body:et expression_tuple_ender:ender
+    %target.cpp {
+        et->grow_firange(open_bracket->firange());
+        et->grow_firange(ender->firange());
+        return et;
+    }
+;
+
+%nonterminal expression_tuple_ender
+:
+    ']':dummy
+    %target.cpp {
+        return dummy;
+    }
+|
+    %empty %lookahead[%end|STATEMENT_DELIMITER]:la
+    %target.cpp {
+        auto type_dummy = sem::make_type_dummy(la.m_data->firange().start_as_firange());
+        record_recoverable_error(type_dummy->firange(), "unterminated tuple -- missing ']'");
+        return type_dummy;
+    }
+;
+
+%nonterminal expression_tuple_body %type.cpp "nnup<sem::Tuple>"
+:
+    expression_tuple_body:et expression_tuple_body_element:e
+    %target.cpp {
+        et->push_back(std::move(e));
+        return et;
+    }
+|
+    expression_tuple_body_element:e
+    %target.cpp {
+        return sem::make_tuple(std::move(e));
+    }
+|
+    %empty %lookahead[%end|STATEMENT_DELIMITER|']']:la
+    %target.cpp {
+        auto et = sem::make_tuple();
+        et->set_firange(la.m_data->firange().start_as_firange());
+        return et;
+    }
+;
+
+// NOTE: This is commented out because there is a REDUCE/REDUCE conflict with
+// the analogous declaration_tuple_body rule(s) where if the parser were changed
+// to look further in a REDUCE/REDUCE conflict, it could sort this out, but for
+// simplicity, it doesn't.
+
+// %nonterminal expression_tuple_body %type.cpp "nnup<sem::Tuple>"
+// :
+//     expression_tuple_body:et expression_tuple_body_element:e
+//     %target.cpp {
+//         et->push_back(std::move(e));
+//         return et;
+//     }
+// |
+//     %empty %lookahead[!%error]:la
+//     %target.cpp {
+//         auto et = sem::make_tuple();
+//         et->set_firange(la.m_data->firange().start_as_firange());
+//         return et;
+//     }
+// ;
+
+%nonterminal expression_tuple_body_element
+:
+    expression:e expression_tuple_body_element_ender
+    %target.cpp {
+        return e;
+    }
+|
+    %error[![%end|STATEMENT_DELIMITER|','|']']]:err expression_tuple_body_element_ender
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error in tuple");
+        return sem::make_type_dummy(err->firange());
+    }
+;
+
+%nonterminal expression_tuple_body_element_ender
+:
+    ',':dummy
+    %target.cpp {
+        return dummy;
+    }
+|
+    %empty %lookahead[%end|STATEMENT_DELIMITER|']']:la
+    %target.cpp {
+        return sem::make_dummy(la.m_data->firange().start_as_firange());
+    }
+;
+
+%nonterminal expression
+:
+    parenthesized_expression:e
+    %target.cpp {
+        return e;
+    }
+|
+    expression:e ')':close_paren
+    %target.cpp {
+        e->grow_firange(close_paren->firange());
+        record_recoverable_error(e->firange(), "mismatched ')' in expression");
+        return e;
+    }
+// |
+//     %error[![%end|STATEMENT_DELIMITER|')']] ')':close_paren
+//     %target.cpp {
+//         record_recoverable_error(close_paren->firange(), "mismatched ')' in expression");
+//         return sem::make_error_dummy();
+//     }
+|
+    expression_tuple:et
+    %target.cpp {
+        return et;
+    }
+|
+    // The lookahead specifier is to prevent this from reducing to expression when it's really a symbol_specifier
+    IDENTIFIER:id %lookahead[![':'|DEFINE|CT|RT|LOCAL|GLOBAL|EXTERNAL|INTERNAL|PRIVATE]]
+    %target.cpp {
+        return id;
+    }
+|
+    VALUE_LITERAL:val
+    %target.cpp {
+        return val;
+    }
+|
+    STRING_LITERAL:str
+    %target.cpp {
+        return str;
+    }
+|
+    expression:positive_expression IF expression:condition OTHERWISE expression:negative_expression %prec CONDITIONAL_EXPRESSION
+    %target.cpp {
+        return sem::make_conditional_expression(std::move(condition), std::move(positive_expression), std::move(negative_expression));
+    }
+|
+    expression:lhs OR expression:rhs %prec LOGICAL_OR
+    %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::LOGICAL_OR, std::move(lhs), std::move(rhs));
+    }
+|
+    expression:lhs XOR expression:rhs %prec LOGICAL_XOR
+    %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::LOGICAL_XOR, std::move(lhs), std::move(rhs));
+    }
+|
+    expression:lhs AND expression:rhs %prec LOGICAL_AND
+    %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::LOGICAL_AND, std::move(lhs), std::move(rhs));
+    }
+|
+    expression:lhs EQUALS expression:rhs %prec EQUALITY
+    %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::EQUALS, std::move(lhs), std::move(rhs));
+    }
+|
+    expression:lhs NOT_EQUALS expression:rhs %prec EQUALITY
+    %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::NOT_EQUALS, std::move(lhs), std::move(rhs));
+    }
+|
+    expression:lhs LESS_THAN expression:rhs %prec COMPARISON
+    %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::LESS_THAN, std::move(lhs), std::move(rhs));
+    }
+|
+    expression:lhs GREATER_THAN expression:rhs %prec COMPARISON
+    %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::GREATER_THAN, std::move(lhs), std::move(rhs));
+    }
+|
+    expression:lhs LESS_OR_EQUAL expression:rhs %prec COMPARISON
+    %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::LESS_OR_EQUAL, std::move(lhs), std::move(rhs));
+    }
+|
+    expression:lhs GREATER_OR_EQUAL expression:rhs %prec COMPARISON
+    %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::GREATER_OR_EQUAL, std::move(lhs), std::move(rhs));
+    }
+|
+    expression:lhs '+' expression:rhs %prec ADDITIVE
+    %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::ADD, std::move(lhs), std::move(rhs));
+    }
+|
+    expression:lhs '-' expression:rhs %prec ADDITIVE
+    %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::SUB, std::move(lhs), std::move(rhs));
+    }
+|
+    expression:lhs '*' expression:rhs %prec MULTIPLICATIVE
+    %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::MUL, std::move(lhs), std::move(rhs));
+    }
+|
+    expression:lhs '/' expression:rhs %prec MULTIPLICATIVE
+    %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::DIV, std::move(lhs), std::move(rhs));
+    }
+|
+    expression:lhs '%' expression:rhs %prec MULTIPLICATIVE
+    %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::MOD, std::move(lhs), std::move(rhs));
+    }
+|
+    '-':minus expression:op %prec HIGH_UNARY
+    %target.cpp {
+        return sem::make_unary_operation(minus->firange() + op->firange(), sem::UnaryOperationType::NEGATE, std::move(op));
+    }
+|
+    NOT:logical_not expression:op %prec HIGH_UNARY
+    %target.cpp {
+        return sem::make_unary_operation(logical_not->firange() + op->firange(), sem::UnaryOperationType::LOGICAL_NOT, std::move(op));
+    }
+|
+    expression:lhs '^' expression:rhs %prec EXPONENTIATION
+    %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::POW, std::move(lhs), std::move(rhs));
+    }
+|
+    expression:op '@':asterisk %prec POINTY
+    %target.cpp {
+        return sem::make_unary_operation(op->firange() + asterisk->firange(), sem::UnaryOperationType::AT_SYMBOL, std::move(op));
+    }
+|
+    expression:op '#':ampersand %prec POINTY
+    %target.cpp {
+        return sem::make_unary_operation(op->firange() + ampersand->firange(), sem::UnaryOperationType::HASH_SYMBOL, std::move(op));
+    }
+|
+    // Ideally this could just use parenthesized_parameter_list, but then the rule precedence doesn't
+    // work as expected.  I think it's something about the SHIFT/REDUCE conflict needing
+    // to work on the terminal '(' in this rule.
+    expression:f '(':open_paren parameter_list_body:pl parameter_list_ender:ender %prec FUNCTION_EVALUATION
+    %target.cpp {
+        pl->grow_firange(open_paren->firange());
+        pl->grow_firange(ender->firange());
+        return sem::make_function_evaluation(std::move(f), std::move(pl));
+    }
+|
+    // Ideally this could just use element_access_key, but then the rule precedence doesn't
+    // work as expected.  I think it's something about the SHIFT/REDUCE conflict needing
+    // to work on the terminal '(' in this rule.
+    expression:r '[':open_bracket element_access_key_body_element:k element_access_key_ender:ender %prec FUNCTION_EVALUATION
+    %target.cpp {
+        k->grow_firange(open_bracket->firange());
+        k->grow_firange(ender->firange());
+        return sem::make_element_access(std::move(r), std::move(k));
+    }
+|
+    function_literal:fl
+    %target.cpp {
+        return fl;
+    }
+|
+    LLVM_CAST_KEYWORD:k '(' expression:e ',' type_expression:t ')':dummy %prec FUNCTION_EVALUATION
+    %target.cpp {
+        return sem::make_llvm_cast(k->firange() + dummy->firange(), k->instruction(), std::move(e), std::move(t));
+    }
+|
+    LLVM_CAST_KEYWORD:k '(' %error[![%end|')'|STATEMENT_DELIMITER]]:err ')':dummy %prec FUNCTION_EVALUATION
+    %target.cpp {
+        record_recoverable_error(err->firange(), LVD_FMT("parse error in argument for " << k->instruction() << " builtin"));
+        return sem::make_llvm_cast(k->firange() + dummy->firange(), k->instruction(), sem::make_dummy(err->firange()), sem::make_type_dummy(err->firange()));
+    }
+|
+    NULLPTR:n '{' type_expression:t '}':dummy %prec FUNCTION_EVALUATION
+    %target.cpp {
+        return sem::make_nullptr(n->firange() + t->firange() + dummy->firange(), std::move(t));
+    }
+|
+    NULLPTR:n '{' %error[![%end|'}'|STATEMENT_DELIMITER]]:err '}':dummy %prec FUNCTION_EVALUATION
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error in argument for __nullptr__ builtin");
+        return sem::make_nullptr(n->firange() + err->firange() + dummy->firange(), sem::make_pointer_type(err->firange(), sem::make_sint64(err->firange())));
+    }
+;
+
+// %nonterminal parenthesized_parameter_list %type.cpp "nnup<sem::ParameterList>"
+// :
+//     '(':open_paren parameter_list_body:pl parameter_list_ender:ender
+//     %target.cpp {
+//         pl->grow_firange(open_paren->firange());
+//         pl->grow_firange(ender->firange());
+//         return pl;
+//     }
+// ;
+
+// %nonterminal element_access_key
+// :
+//     '[':open_bracket element_access_key_body:kb element_access_key_ender:ender
+//     %target.cpp {
+//         kb->grow_firange(open_bracket->firange());
+//         kb->grow_firange(ender->firange());
+//         return kb;
+//     }
+// ;
+
+%nonterminal element_access_key_ender
+:
+    ']':dummy
+    %target.cpp {
+        return dummy;
+    }
+|
+    %empty %lookahead[%end|STATEMENT_DELIMITER]:la
+    %target.cpp {
+        return sem::make_dummy(la.m_data->firange().start_as_firange());
+    }
+;
+
+// %nonterminal element_access_key_body %type.cpp "nnup<sem::Tuple>"
+// :
+//     element_access_key_body:kb element_access_key_body_element:k
+//     %target.cpp {
+//         kb->push_back(k);
+//         return kb;
+//     }
+// |
+//     element_access_key_body_element:k
+//     %target.cpp {
+//         return sem::make_tuple(k);
+//     }
+// |
+//     %empty %lookahead[%end|']']:la
+//     %target.cpp {
+//         auto kb = sem::make_tuple();
+//         kb->set_firange(la.m_data->firange().start_as_firange());
+//         return kb;
+//     }
+// ;
+//
+%nonterminal element_access_key_body_element
+:
+    expression:e element_access_key_body_element_ender
+    %target.cpp {
+        return e;
+    }
+|
+    %error[![%end|STATEMENT_DELIMITER|','|']']]:err element_access_key_body_element_ender
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error in element access key");
+        return err;
+    }
+;
+
+%nonterminal element_access_key_body_element_ender
+:
+    ',':dummy
+    %target.cpp {
+        return dummy;
+    }
+|
+    %empty %lookahead[%end|STATEMENT_DELIMITER|']']:la
+    %target.cpp {
+        return sem::make_dummy(la.m_data->firange().start_as_firange());
+    }
+;
+
+%nonterminal parameter_list_ender
+:
+    ')':dummy
+    %target.cpp {
+        return dummy;
+    }
+|
+    %empty %lookahead[%end|STATEMENT_DELIMITER]:la
+    %target.cpp {
+        auto dummy = sem::make_dummy(la.m_data->firange().start_as_firange());
+        record_recoverable_error(dummy->firange(), "unterminated parameter list -- missing ')'");
+        return dummy;
+    }
+;
+
+%nonterminal parameter_list_body %type.cpp "nnup<sem::ParameterList>"
+:
+    parameter_list_body:pl parameter_list_body_element:p
+    %target.cpp {
+        pl->push_back(std::move(p));
+        return pl;
+    }
+|
+    parameter_list_body_element:p
+    %target.cpp {
+        return sem::make_parameter_list(std::move(p));
+    }
+|
+    %empty %lookahead[%end|STATEMENT_DELIMITER|')']:la
+    %target.cpp {
+        auto pl = sem::make_parameter_list();
+        pl->set_firange(la.m_data->firange().start_as_firange());
+        return pl;
+    }
+;
+
+%nonterminal parameter_list_body_element
+:
+    expression:e parameter_list_body_element_ender
+    %target.cpp {
+        return e;
+    }
+|
+    %error[![%end|STATEMENT_DELIMITER|','|')']]:err parameter_list_body_element_ender
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error in parameter list");
+        return err;
+    }
+;
+
+%nonterminal parameter_list_body_element_ender
+:
+    ',':comma
+    %target.cpp {
+        return comma;
+    }
+|
+    %empty %lookahead[%end|STATEMENT_DELIMITER|')']:la
+    %target.cpp {
+        return sem::make_dummy(la.m_data->firange().start_as_firange());
+    }
+;
+
+%nonterminal function_literal %type.cpp "nnup<sem::Function>"
+:
+    function_prototype:fpe bracketed_statement_list:body %target.cpp
+    {
+        return sem::make_function(std::move(fpe), std::move(body));
+    }
+;
+
+%nonterminal function_prototype %type.cpp "nnup<sem::FunctionPrototype>"
+:
+    function_prototype_domain_declaration_tuple:domain_dt MAPS_TO type_expression:codomain %prec MAPPING
+    %target.cpp {
+        return sem::make_function_prototype(std::move(domain_dt), std::move(codomain));
+    }
+;
+
+%nonterminal function_prototype_domain_declaration_tuple %type.cpp "nnup<sem::DeclarationTuple>"
+:
+    declaration_tuple:domain_dt %lookahead[MAPS_TO]
+    %target.cpp {
+        return domain_dt;
+    }
+|
+    %error[![%end|MAPS_TO]]:err %lookahead[MAPS_TO]
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error in function prototype expression before '->'");
+        auto domain_dt = sem::make_declaration_tuple();
+        domain_dt->set_firange(err->firange());
+        return domain_dt;
+    }
+;
+
+%nonterminal type_tuple %type.cpp "nnup<sem::TypeTuple>"
+:
+    '[':open_bracket type_tuple_body:tt type_tuple_ender:ender
+    %target.cpp {
+        tt->grow_firange(open_bracket->firange());
+        tt->grow_firange(ender->firange());
+        return tt;
+    }
+;
+
+%nonterminal type_tuple_ender
+:
+    ']':dummy
+    %target.cpp {
+        return dummy;
+    }
+|
+    %empty %lookahead[%end|STATEMENT_DELIMITER]:la
+    %target.cpp {
+        auto type_dummy = sem::make_type_dummy(la.m_data->firange().start_as_firange());
+        record_recoverable_error(type_dummy->firange(), "unterminated type tuple -- missing ']'");
+        return type_dummy;
+    }
+;
+
+%nonterminal type_tuple_body %type.cpp "nnup<sem::TypeTuple>"
+:
+    type_tuple_body:tt type_tuple_body_element:t
+    %target.cpp {
+        tt->push_back(std::move(t));
+        return tt;
+    }
+|
+    type_tuple_body_element:t
+    %target.cpp {
+        return sem::make_type_tuple(std::move(t));
+    }
+|
+    %empty %lookahead[%end|STATEMENT_DELIMITER|']']:la
+    %target.cpp {
+        auto tt = sem::make_type_tuple();
+        tt->set_firange(la.m_data->firange().start_as_firange());
+        return tt;
+    }
+;
+
+%nonterminal type_tuple_body_element %type.cpp "nnup<sem::TypeBase>"
+:
+    type_expression:t type_tuple_body_element_ender
+    %target.cpp {
+        return t;
+    }
+|
+    %error[![%end|STATEMENT_DELIMITER|','|']']]:err type_tuple_body_element_ender
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error in type tuple");
+        return sem::make_type_dummy(err->firange());
+    }
+;
+
+%nonterminal type_tuple_body_element_ender
+:
+    ',':dummy
+    %target.cpp {
+        return dummy;
+    }
+|
+    %empty %lookahead[%end|STATEMENT_DELIMITER|']']:la
+    %target.cpp {
+        return sem::make_dummy(la.m_data->firange().start_as_firange());
+    }
+;
+
+%nonterminal type_expression %type.cpp "nnup<sem::TypeBase>"
+:
+    VOID_TYPE:t %target.cpp { return t; }
+|
+    NULL_TYPE:t %target.cpp { return t; }
+|
+    BOOLEAN:t %target.cpp { return t; }
+|
+    SINT8:t %target.cpp { return t; }
+|
+    SINT16:t %target.cpp { return t; }
+|
+    SINT32:t %target.cpp { return t; }
+|
+    SINT64:t %target.cpp { return t; }
+|
+    UINT8:t %target.cpp { return t; }
+|
+    UINT16:t %target.cpp { return t; }
+|
+    UINT32:t %target.cpp { return t; }
+|
+    UINT64:t %target.cpp { return t; }
+|
+    FLOAT32:t %target.cpp { return t; }
+|
+    FLOAT64:t %target.cpp { return t; }
+|
+    function_type:t %target.cpp { return t; }
+|
+    function_prototype:t %target.cpp { return t; }
+|
+    type_tuple:tt
+    %target.cpp {
+        // Convert into TypeArray if possible.
+        return tt->regularized();
+    }
+|
+    // TODO: Replace VALUE_LITERAL with constant_value_expression
+    type_tuple:tt '*' VALUE_LITERAL:val %prec AGGREGATE_MULTIPLIER
+    %target.cpp {
+        if (val->type_enum__raw() != sem::TypeEnum::SINT64_VALUE)
+        {
+            record_recoverable_error(val->firange(), "expected integer operand for array/tuple product syntax");
+            return (*tt)*(*sem::make_sint64_value(val->firange(), 0));
+        }
+        else
+            return (*tt)*(*lvd::dynamic_move_cast<sem::Sint64Value>(val));
+    }
+|
+    IDENTIFIER:id %target.cpp { return sem::make_type_identifier(std::move(id)); }
+|
+    type_expression:te '@':asterisk %prec POINTY
+    %target.cpp {
+        return sem::make_pointer_type(te->firange()+asterisk->firange(), std::move(te));
+    }
+|
+    type_expression:te '#':ampersand %prec POINTY
+    %target.cpp {
+        return sem::make_reference_type(te->firange()+ampersand->firange(), std::move(te));
+    }
+;
+
+%nonterminal function_type %type.cpp "nnup<sem::FunctionType>"
+:
+    function_type_domain:domain_tt MAPS_TO type_expression:codomain %prec MAPPING
+    %target.cpp {
+        return sem::make_function_type(std::move(domain_tt), std::move(codomain));
+    }
+;
+
+%nonterminal function_type_domain %type.cpp "nnup<sem::TypeTuple>"
+:
+    type_expression:domain %lookahead[MAPS_TO]
+    %target.cpp {
+        // If the type is already a tuple, don't wrap it in additional tuplage.
+        if (domain->type_enum__raw() == sem::TypeEnum::TYPE_TUPLE)
+            return domain;
+        else
+            return sem::make_type_tuple(std::move(domain));
+    }
+|
+    %error[![%end|MAPS_TO]]:err %lookahead[MAPS_TO]
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error in function type expression before '->'");
+        auto domain_tt = sem::make_type_tuple();
+        domain_tt->set_firange(err->firange());
+        return domain_tt;
+    }
+;
+
+%nonterminal function_type_then_end %type.cpp "nnup<sem::FunctionType>"
+:
+    function_type:fte %end
+    %target.cpp {
+        return fte;
+    }
+;
+
+%nonterminal symbol_specifier %type.cpp "nnup<sem::SymbolSpecifier>"
+:
+    symbol_specifier:ss CT:dummy %prec LOW_UNARY
+    %target.cpp {
+        return ss->with_specified_value_kind(sem::ValueKind::CONSTANT, dummy->firange());
+    }
+|
+    symbol_specifier:ss RT:dummy %prec LOW_UNARY
+    %target.cpp {
+        return ss->with_specified_value_kind(sem::ValueKind::VARIABLE, dummy->firange());
+    }
+|
+    symbol_specifier:ss LOCAL:dummy %prec LOW_UNARY
+    %target.cpp {
+        return ss->with_specified_value_lifetime(sem::ValueLifetime::LOCAL, dummy->firange());
+    }
+|
+    symbol_specifier:ss GLOBAL:dummy %prec LOW_UNARY
+    %target.cpp {
+        return ss->with_specified_value_lifetime(sem::ValueLifetime::GLOBAL, dummy->firange());
+    }
+|
+    symbol_specifier:ss EXTERNAL:dummy %prec LOW_UNARY
+    %target.cpp {
+        return ss->with_specified_global_value_linkage(sem::GlobalValueLinkage::EXTERNAL, dummy->firange());
+    }
+|
+    symbol_specifier:ss INTERNAL:dummy %prec LOW_UNARY
+    %target.cpp {
+        return ss->with_specified_global_value_linkage(sem::GlobalValueLinkage::INTERNAL, dummy->firange());
+    }
+|
+    symbol_specifier:ss PRIVATE:dummy %prec LOW_UNARY
+    %target.cpp {
+        return ss->with_specified_global_value_linkage(sem::GlobalValueLinkage::PRIVATE, dummy->firange());
+    }
+|
+    IDENTIFIER:id %lookahead[':'|DEFINE|CT|RT|LOCAL|GLOBAL|EXTERNAL|INTERNAL|PRIVATE]
+    %target.cpp {
+        return sem::make_symbol_specifier(
+            std::move(id),
+            sem::make_value_kind_specifier(id->firange().end_as_firange(), sem::ValueKindContextual::DETERMINE_FROM_CONTEXT),
+            sem::make_value_lifetime_specifier(id->firange().end_as_firange(), sem::ValueLifetimeContextual::DETERMINE_FROM_CONTEXT),
+            sem::make_global_value_linkage_specifier(sem::GlobalValueLinkageContextual::DETERMINE_FROM_CONTEXT)
+        );
+    }
+;
+
+// A declaration within a declaration statement.
+%nonterminal declaration_statement %type.cpp "nnup<sem::Declaration>"
+:
+    declaration_symbol_specifier:ss declaration_statement_type:t %prec TYPE_DECLARATION
+    %target.cpp {
+        return sem::make_declaration(std::move(ss), std::move(t));
+    }
+|
+    %error[![%end|'}'|STATEMENT_DELIMITER]]:err statement_ender %prec TYPE_DECLARATION
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error in declaration statement");
+        return sem::make_declaration(
+            sem::make_symbol_specifier(
+                sem::make_identifier(err->firange(), "<dummy>"),
+                sem::make_value_kind_specifier(err->firange(), sem::ValueKindContextual::DETERMINE_FROM_CONTEXT),
+                sem::make_value_lifetime_specifier(err->firange(), sem::ValueLifetimeContextual::DETERMINE_FROM_CONTEXT),
+                sem::make_global_value_linkage_specifier(sem::GlobalValueLinkageContextual::DETERMINE_FROM_CONTEXT)
+            ),
+            sem::make_type_dummy(err->firange())
+        );
+    }
+;
+
+// A declaration statement has the form `id : type_expression statement_ender`.
+// This is the `type_expression statement_ender` part of it.
+%nonterminal declaration_statement_type %type.cpp "nnup<sem::TypeBaseOrTypeKeyword>"
+:
+    TYPE_KEYWORD:t statement_ender
+    %target.cpp {
+        return t;
+    }
+|
+    type_expression:t statement_ender
+    %target.cpp {
+        return t;
+    }
+|
+    %error[![%end|'}'|STATEMENT_DELIMITER]]:err statement_ender
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error after ':' in declaration statement");
+        return sem::make_type_dummy(err->firange());
+    }
+;
+
+// This exists within the context of statement.
+%nonterminal initialization_statement %type.cpp "nnup<sem::Initialization>"
+:
+    initialization_id:id initialization_statement_content:content %prec TYPE_DECLARATION
+    %target.cpp {
+        return sem::make_initialization(std::move(id), std::move(content));
+    }
+|
+    %error[![%end|'}'|STATEMENT_DELIMITER]]:err statement_ender %prec TYPE_DECLARATION
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error in initialization statement");
+        return sem::make_initialization(
+            sem::make_identifier(err->firange(), "<dummy>"),
+            sem::make_type_dummy(err->firange())
+        );
+    }
+;
+
+// A initialization the form `id := <stuff>`.  This is the `id :=` part of it.
+%nonterminal initialization_id %type.cpp "nnup<sem::Identifier>"
+:
+    IDENTIFIER:id INITIALIZE
+    %target.cpp {
+        return id;
+    }
+|
+    %error[![%end|INITIALIZE]]:err INITIALIZE
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error before ':=' in initialization");
+        return sem::make_identifier(err->firange(), "<dummy>");
+    }
+;
+
+// A initialization statement has the form `id := <stuff> statement_ender`.  This is the
+// `<stuff> statement_ender` part of it.
+%nonterminal initialization_statement_content
+:
+    type_expression:t statement_ender
+    %target.cpp {
+        return t;
+    }
+|
+    expression:e statement_ender
+    %target.cpp {
+        return e;
+    }
+|
+    %error[![%end|'}'|STATEMENT_DELIMITER]]:err statement_ender
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error after ':=' in initialization statement");
+        return sem::make_type_dummy(err->firange());
+    }
+;
+
+// This exists within the context of statement.
+%nonterminal definition_statement %type.cpp "nnup<sem::Definition>"
+:
+    definition_symbol_specifier:symbol_specifier definition_statement_content:content %prec TYPE_DECLARATION
+    %target.cpp {
+        return sem::make_definition(std::move(symbol_specifier), std::move(content));
+    }
+|
+    %error[![%end|'}'|STATEMENT_DELIMITER]]:err statement_ender %prec TYPE_DECLARATION
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error in definition statement");
+        return sem::make_definition(
+            sem::make_symbol_specifier(
+                sem::make_identifier(err->firange(), "<dummy>"),
+                sem::make_value_kind_specifier(err->firange(), sem::ValueKindContextual::DETERMINE_FROM_CONTEXT),
+                sem::make_value_lifetime_specifier(err->firange(), sem::ValueLifetimeContextual::DETERMINE_FROM_CONTEXT),
+                sem::make_global_value_linkage_specifier(sem::GlobalValueLinkageContextual::DETERMINE_FROM_CONTEXT)
+            ),
+            sem::make_type_dummy(err->firange())
+        );
+    }
+;
+
+// A definition the form `symbol_specifier ::= <stuff>`.  This is the `symbol_specifier ::=` part of it.
+%nonterminal definition_symbol_specifier %type.cpp "nnup<sem::SymbolSpecifier>"
+:
+    symbol_specifier:ss DEFINE
+    %target.cpp {
+        return ss;
+    }
+|
+    %error[![%end|DEFINE]]:err DEFINE
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error before '::=' in definition");
+        return sem::make_symbol_specifier(
+            sem::make_identifier(err->firange(), "<dummy>"),
+            sem::make_value_kind_specifier(err->firange(), sem::ValueKindContextual::DETERMINE_FROM_CONTEXT),
+            sem::make_value_lifetime_specifier(err->firange(), sem::ValueLifetimeContextual::DETERMINE_FROM_CONTEXT),
+            sem::make_global_value_linkage_specifier(sem::GlobalValueLinkageContextual::DETERMINE_FROM_CONTEXT)
+        );
+    }
+;
+
+// A definition statement has the form `id ::= <stuff> statement_ender`.  This is the
+// `<stuff> statement_ender` part of it.
+%nonterminal definition_statement_content
+:
+    type_expression:t statement_ender
+    %target.cpp {
+        return t;
+    }
+|
+    expression:e statement_ender
+    %target.cpp {
+        return e;
+    }
+|
+    %error[![%end|'}'|STATEMENT_DELIMITER]]:err statement_ender
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error after '::=' in definition statement");
+        return sem::make_type_dummy(err->firange());
+    }
+;
+
+// This exists within the context of statement.
+%nonterminal assignment_statement %type.cpp "nnup<sem::Assignment>"
+:
+    assignment_target:target assignment_statement_content:content %prec ASSIGNMENT
+    %target.cpp {
+        return sem::make_assignment(std::move(target), std::move(content));
+    }
+;
+
+// An assignment the form `<lhs> = <rhs>`.  This is the `<lhs> =` part of it.
+%nonterminal assignment_target
+:
+    expression:target ASSIGN
+    %target.cpp {
+        return target;
+    }
+|
+    %error[![%end|ASSIGN]]:err ASSIGN
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error before '=' in assignment");
+        return sem::make_identifier(err->firange(), "<dummy>");
+    }
+;
+
+// A assignment statement has the form `<lhs> = <rhs> statement_ender`.  This is the
+// `<rhs> statement_ender` part of it.
+%nonterminal assignment_statement_content
+:
+    type_expression:t statement_ender
+    %target.cpp {
+        return t;
+    }
+|
+    expression:e statement_ender
+    %target.cpp {
+        return e;
+    }
+|
+    %error[![%end|'}'|STATEMENT_DELIMITER]]:err statement_ender
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error after '=' in assignment statement");
+        return sem::make_type_dummy(err->firange());
+    }
+;
+
+%nonterminal declaration_tuple %type.cpp "nnup<sem::DeclarationTuple>"
+:
+    '(':open_bracket declaration_tuple_body:dt declaration_tuple_ender:ender
+    %target.cpp {
+        dt->grow_firange(open_bracket->firange());
+        dt->grow_firange(ender->firange());
+        return dt;
+    }
+;
+
+// For use in declaration_tuple_body_element
+%nonterminal declaration_tuple_ender
+:
+    ')':dummy
+    %target.cpp {
+        return dummy;
+    }
+|
+    %empty %lookahead[%end|STATEMENT_DELIMITER]:la
+    %target.cpp {
+        auto dummy = sem::make_dummy(la.m_data->firange().start_as_firange());
+        record_recoverable_error(dummy->firange(), "unterminated declaration tuple -- missing ')'");
+        return dummy;
+    }
+;
+
+%nonterminal declaration_tuple_body %type.cpp "nnup<sem::DeclarationTuple>"
+:
+    declaration_tuple_body:dt declaration_tuple_body_element:d
+    %target.cpp {
+        dt->push_back(std::move(d));
+        return dt;
+    }
+|
+    declaration_tuple_body_element:d
+    %target.cpp {
+        return sem::make_declaration_tuple(std::move(d));
+    }
+|
+    %empty %lookahead[%end|STATEMENT_DELIMITER|')']:la
+    %target.cpp {
+        auto dt = sem::make_declaration_tuple();
+        dt->set_firange(la.m_data->firange().start_as_firange());
+        return dt;
+    }
+;
+
+// NOTE: This is commented out because there is a REDUCE/REDUCE conflict with
+// the analogous expression_tuple_body rule(s) where if the parser were changed
+// to look further in a REDUCE/REDUCE conflict, it could sort this out, but for
+// simplicity, it doesn't.
+
+// %nonterminal declaration_tuple_body %type.cpp "nnup<sem::DeclarationTuple>"
+// :
+//     declaration_tuple_body:dt declaration_tuple_body_element:d
+//     %target.cpp {
+//         dt->push_back(std::move(d));
+//         return dt;
+//     }
+// |
+//     %empty %lookahead[!%error]:la
+//     %target.cpp {
+//         auto dt = sem::make_declaration_tuple();
+//         dt->set_firange(la.m_data->firange().start_as_firange());
+//         return dt;
+//     }
+// ;
+
+%nonterminal declaration_tuple_body_element %type.cpp "nnup<sem::Declaration>"
+:
+    declaration_symbol_specifier:ss declaration_tuple_body_element_type:t %prec TYPE_DECLARATION
+    %target.cpp {
+        return sem::make_declaration(std::move(ss), std::move(t));
+    }
+|
+    %error[![%end|STATEMENT_DELIMITER|')'|',']]:err declaration_tuple_body_element_ender %prec TYPE_DECLARATION
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error in declaration");
+        return sem::make_declaration(
+            sem::make_symbol_specifier(
+                sem::make_identifier(err->firange(), "<dummy>"),
+                sem::make_value_kind_specifier(err->firange(), sem::ValueKindContextual::DETERMINE_FROM_CONTEXT),
+                sem::make_value_lifetime_specifier(err->firange(), sem::ValueLifetimeContextual::DETERMINE_FROM_CONTEXT),
+                sem::make_global_value_linkage_specifier(sem::GlobalValueLinkageContextual::DETERMINE_FROM_CONTEXT)
+            ),
+            sem::make_type_dummy(err->firange())
+        );
+    }
+;
+
+// A declaration the form `symbol_specifier : type_expression`.  This is the `symbol_specifier :` part of it.
+%nonterminal declaration_symbol_specifier %type.cpp "nnup<sem::SymbolSpecifier>"
+:
+    symbol_specifier:ss ':'
+    %target.cpp {
+        return ss;
+    }
+|
+    %error[![%end|':']]:err ':'
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error before ':' in declaration");
+        return sem::make_symbol_specifier(
+            sem::make_identifier(err->firange(), "<dummy>"),
+            sem::make_value_kind_specifier(err->firange(), sem::ValueKindContextual::DETERMINE_FROM_CONTEXT),
+            sem::make_value_lifetime_specifier(err->firange(), sem::ValueLifetimeContextual::DETERMINE_FROM_CONTEXT),
+            sem::make_global_value_linkage_specifier(sem::GlobalValueLinkageContextual::DETERMINE_FROM_CONTEXT)
+        );
+    }
+;
+
+// A declaration tuple body element has the form `id : type_expression ,` (comma optional)
+// This is the `type_expression ,` part of it.
+%nonterminal declaration_tuple_body_element_type %type.cpp "nnup<sem::TypeBase>"
+:
+    type_expression:t declaration_tuple_body_element_ender
+    %target.cpp {
+        return t;
+    }
+|
+    %error[![%end|STATEMENT_DELIMITER|')'|',']]:err declaration_tuple_body_element_ender
+    %target.cpp {
+        record_recoverable_error(err->firange(), "parse error after ':' in declaration");
+        return sem::make_type_dummy(err->firange());
+    }
+;
+
+// For use in declaration_tuple_body_element
+%nonterminal declaration_tuple_body_element_ender
+:
+    ',':dummy
+    %target.cpp {
+        return dummy;
+    }
+|
+    // This is SUPER_LOW (notably below default) so that `($%)` parses as an error inside a
+    // parenthesized_expression instead of a declaration_tuple.
+    %empty %lookahead[%end|STATEMENT_DELIMITER|')']:la %prec SUPER_LOW
+    %target.cpp {
+        return sem::make_dummy(la.m_data->firange().start_as_firange());
+    }
+;
+
+%nonterminal statement_then_end
+:
+    statement:s %end
+    %target.cpp {
+        return s;
+    }
+;
+
+%nonterminal statement
+:
+    bracketed_statement_list:sl
+    %target.cpp {
+        return sl;
+    }
+|
+    declaration_statement:d
+    %target.cpp {
+        return d;
+    }
+|
+    initialization_statement:i
+    %target.cpp {
+        return i;
+    }
+|
+    definition_statement:d
+    %target.cpp {
+        return d;
+    }
+|
+    assignment_statement:a
+    %target.cpp {
+        return a;
+    }
+|
+    IF:if_token expression:condition THEN statement:then_statement OTHERWISE statement:otherwise_statement
+    %target.cpp {
+        auto conditional = sem::make_conditional_statement(std::move(condition), std::move(then_statement), std::move(otherwise_statement));
+        conditional->grow_firange(if_token->firange());
+        return conditional;
+    }
+|
+    // TODO: Verify if %lookahead[!OTHERWISE] is really necessary.
+    IF:if_token expression:condition THEN statement:then_statement %lookahead[!OTHERWISE]
+    %target.cpp {
+        auto conditional = sem::make_conditional_statement(std::move(condition), std::move(then_statement));
+        conditional->grow_firange(if_token->firange());
+        return conditional;
+    }
+|
+    WHILE:while_token expression:condition DO statement:loop_body
+    %target.cpp {
+        auto w = sem::make_loop(sem::LoopType::WHILE_DO, std::move(condition));
+        w->grow_firange(while_token->firange());
+        if (loop_body->type_enum__raw() == sem::TypeEnum::STATEMENT_LIST)
+            w->set_body(lvd::dynamic_move_cast<sem::StatementList>(loop_body));
+        else
+        {
+            auto sl = sem::make_statement_list(std::move(loop_body));
+            w->set_body(std::move(sl));
+        }
+        return w;
+    }
+|
+    DO:do_token statement:loop_body WHILE expression:condition
+    %target.cpp {
+        auto w = sem::make_loop(sem::LoopType::DO_WHILE, std::move(condition));
+        w->grow_firange(do_token->firange());
+        if (loop_body->type_enum__raw() == sem::TypeEnum::STATEMENT_LIST)
+            w->set_body(lvd::dynamic_move_cast<sem::StatementList>(loop_body));
+        else
+        {
+            auto sl = sem::make_statement_list(std::move(loop_body));
+            w->set_body(std::move(sl));
+        }
+        return w;
+    }
+|
+    BREAK:break_token statement_ender
+    %target.cpp {
+        return break_token;
+    }
+|
+    BREAK:break_token %error[![%end|'}'|STATEMENT_DELIMITER]]:err statement_ender
+    %target.cpp {
+        record_recoverable_error(err->firange(), "unexpected tokens in break statement");
+        return break_token;
+    }
+|
+    // TODO: Could make return_statement analogous to declaration_statement
+    RETURN:return_token statement_ender
+    %target.cpp {
+        return return_token;
+    }
+|
+    RETURN:return_token expression:return_expression statement_ender
+    %target.cpp {
+        return_token->set_return_expression(std::move(return_expression));
+        return return_token;
+    }
+|
+    RETURN:return_token %error[![%end|'}'|STATEMENT_DELIMITER]]:err statement_ender %target.cpp
+    {
+        auto error_dummy = sem::make_error_dummy(return_token->firange() + err->firange());
+        record_recoverable_error(err->firange(), "parse error in return statement");
+        return_token->set_return_expression(std::move(error_dummy));
+        return return_token;
+    }
+|
+    // The return value of the expression (e.g. function call) will be ignored.
+    expression:e statement_ender
+    %target.cpp {
+        return e;
+    }
+|
+    %error[![%end|'}'|STATEMENT_DELIMITER]]:err statement_ender %target.cpp
+    {
+        record_recoverable_error(err->firange(), "parse error in statement");
+        return err;
+    }
+;
+
+%nonterminal statement_ender
+:
+    STATEMENT_DELIMITER:sd
+    %target.cpp {
+        return sd;
+    }
+|
+    %empty %lookahead[%end|'}']:la
+    %target.cpp {
+        return sem::make_dummy(la.m_data->firange().start_as_firange());
+    }
+;
+
+%nonterminal bracketed_statement_list %type.cpp "nnup<sem::StatementList>"
+:
+    '{':open_bracket statement_list:sl bracketed_statement_list_ender:ender
+    %target.cpp {
+        sl->grow_firange(open_bracket->firange());
+        sl->grow_firange(ender->firange());
+        return sl;
+    }
+;
+
+%nonterminal bracketed_statement_list_ender
+:
+    '}':dummy
+    %target.cpp {
+        return dummy;
+    }
+|
+    %empty %lookahead[%end]:la
+    %target.cpp {
+        auto dummy = sem::make_dummy(la.m_data->firange().start_as_firange());
+        record_recoverable_error(dummy->firange(), "unterminated bracketed statement list -- missing '}'");
+        return dummy;
+    }
+;
+
+%nonterminal statement_list_then_end %type.cpp "nnup<sem::StatementList>"
+:
+    statement_list:sl %end %target.cpp { return sl; }
+;
+
+%nonterminal statement_list %type.cpp "nnup<sem::StatementList>"
+:
+    statement_list:sl statement:s
+    %target.cpp {
+        sl->push_back(std::move(s));
+        return sl;
+    }
+|
+    statement_list:sl STATEMENT_DELIMITER
+    %target.cpp {
+        return sl;
+    }
+|
+    // The lookaheads are the only things that could end a statement list.  NOTE that
+    // this implies that reducing this rule depends on the larger context (i.e. the
+    // reduction rule(s) that contain the statement_list nonterminal).
+    %empty %lookahead[!%error]:la
+    %target.cpp {
+        auto sl = sem::make_statement_list();
+        // Take the start of the lookahead FiRange.
+        sl->set_firange(la.m_data->firange().start_as_firange());
+        return sl;
+    }
+;
+
+// %nonterminal statement_list %type.cpp "nnup<sem::StatementList>"
+// :
+//     statement_list:sl statement:s
+//     %target.cpp {
+//         sl->push_back(std::move(s));
+//         return sl;
+//     }
+// |
+//     statement_list:sl STATEMENT_DELIMITER
+//     %target.cpp {
+//         return sl;
+//     }
+// |
+//     statement:s
+//     %target.cpp {
+//         return sem::make_statement_list(std::move(s));
+//     }
+// |
+//     STATEMENT_DELIMITER:sd
+//     %target.cpp {
+//         auto sl = sem::make_statement_list();
+//         sl->set_firange(sd->firange().start_as_firange());
+//         return sl;
+//     }
+// |
+//     // The lookaheads are the only things that could end a statement list.  NOTE that
+//     // this implies that reducing this rule depends on the larger context (i.e. the
+//     // reduction rule(s) that contain the statement_list nonterminal).
+//     %empty %lookahead[%end|'}']:la
+//     %target.cpp {
+//         auto sl = sem::make_statement_list();
+//         // Take the start of the lookahead FiRange.
+//         sl->set_firange(la.m_data->firange().start_as_firange());
+//         return sl;
+//     }
+// ;
+//
+// ///////////////////////////////////////////////////////////////////////////
+//
+// ///////////////////////////////////////////////////////////////////////////
+
+%nonterminal lookahead_test_expression_then_end
+:
+    lookahead_test_expression:lte %end
+    %target.cpp {
+        return lte;
+    }
+;
+
+%nonterminal lookahead_test_expression
+:
+    IDENTIFIER:identifier
+    %target.cpp {
+        return identifier;
+    }
+|
+    lookahead_test_expression:lhs FANCYOP FANCYOP FANCYOP FANCYOP lookahead_test_expression:rhs
+    %prec TINNY %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::TIN, std::move(lhs), std::move(rhs));
+    }
+|
+    lookahead_test_expression:lhs FANCYOP FANCYOP lookahead_test_expression:rhs
+    %prec SPLUNGITIVE %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::SPLUNGE, std::move(lhs), std::move(rhs));
+    }
+|
+    lookahead_test_expression:lhs FANCYOP lookahead_test_expression:rhs
+    %prec WOODY %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::WOOD, std::move(lhs), std::move(rhs));
+    }
+|
+    lookahead_test_expression:lhs FANCYOP FANCYOP FANCYOP lookahead_test_expression:rhs
+    %prec DINSDALACIOUS %target.cpp {
+        return sem::make_binary_operation(sem::BinaryOperationType::DINSDALE, std::move(lhs), std::move(rhs));
+    }
+;
+
+// EXPERIMENTAL
+
+%nonterminal id_list_then_end
+:
+    id_list:list %end
+    %target.cpp {
+        return list;
+    }
+;
+
+%nonterminal id_list %type.cpp "nnup<sem::StatementList>"
+:
+    id_list:list IDENTIFIER:id
+    %target.cpp {
+        list->push_back(std::move(id));
+        return list;
+    }
+|
+    id_list:list %error[![%end|')']]
+    %target.cpp {
+        auto error_dummy = sem::make_error_dummy(FiRange(list->firange().filename(), list->firange().start(), fipos()));
+        record_recoverable_error(error_dummy->firange(), "parse error in id_list");
+        list->push_back(std::move(error_dummy));
+        return list;
+    }
+|
+//     %empty  %prec SUPER_LOW
+    %empty
+    %target.cpp {
+        auto sl = sem::make_statement_list();
+        sl->set_firange(FiRange(filoc().filename(), fipos(), fipos()));
+        return sl;
+    }
+;
+
+%nonterminal parenthesized_id_list
+:
+    '(':open_paren id_list:list ')':close_paren
+    %target.cpp {
+        list->grow_firange(open_paren->firange());
+        list->grow_firange(close_paren->firange());
+        return list;
+    }
+;

@@ -1,0 +1,1009 @@
+// 2015.01.24 - Victor Dods
+
+%targets cpp
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner header-file-related directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%target.cpp.header_filename "Scanner.hpp"
+%target.cpp.implementation_filename "Scanner.cpp"
+
+%target.cpp.top_of_header_file %{
+#include "core.hpp"
+#include "FiRange.hpp"
+#include "cbz/InputBase.hpp"
+#include "sem/StringLiteral.hpp"
+#include "sem/Value.hpp"
+#include "cbz/text/Parser.hpp"
+#include <functional>
+#include <fstream>
+#include <sstream>
+
+namespace cbz {
+namespace text {
+%}
+%target.cpp.class_name Scanner
+%target.cpp.class_inheritance { protected InputBase }
+%target.cpp.top_of_class {
+}
+%target.cpp.bottom_of_class {
+    using InputBase::is_open;
+    using InputBase::input_name;
+    using InputBase::filoc;
+    using InputBase::fipos;
+    using InputBase::firange;
+
+    bool open_file (std::string const &input_filename);
+    void open_string (std::string const &input_string, std::string const &input_name, bool use_line_numbers = false);
+    void open_using_stream (std::istream *input_stream, std::string const &input_name, bool use_line_numbers);
+
+    using InputBase::close;
+
+    void set_handler__record_message (std::function<void(FiRange const &, std::string const &)> const &f) { m_record_message = f; }
+    void set_handler__record_recoverable_error (std::function<void(FiRange const &, std::string const &)> const &f) { m_record_recoverable_error = f; }
+
+private:
+
+    FiRange UpdateCursorAndGetFiRange (std::string const &accepted_string);
+
+    std::function<void(FiRange const &, std::string const &)> m_record_message;
+    std::function<void(FiRange const &, std::string const &)> m_record_recoverable_error;
+    up<sem::Uint8Value> m_char_literal;
+    up<sem::StringLiteral> m_string_literal;
+    FiPos m_fipos_cursor;
+}
+%target.cpp.bottom_of_header_file %{
+} // end namespace text
+} // end namespace cbz
+%}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner implementation-file-related directives
+// ///////////////////////////////////////////////////////////////////////////
+
+%target.cpp.top_of_implementation_file %{
+#include "cbz/literal.hpp"
+#include "sem/Break.hpp"
+#include "sem/Dummy.hpp"
+#include "sem/ErrorDummy.hpp"
+#include "sem/Identifier.hpp"
+#include "sem/LLVMCast.hpp"
+#include "sem/Return.hpp"
+#include "sem/Specifier.hpp"
+#include "sem/Type.hpp"
+#include "sem/Value.hpp"
+
+namespace cbz {
+namespace text {
+
+bool Scanner::open_file (std::string const &input_filename)
+{
+    bool open_succeeded = InputBase::open_file(input_filename);
+    if (open_succeeded)
+    {
+        ResetForNewInput();
+        IstreamIterator(std::istream_iterator<char>(in()));
+        // unlimited readahead (read the whole file immediately)
+        InputReadahead(0);
+    }
+    return open_succeeded;
+}
+
+void Scanner::open_string (std::string const &input_string, std::string const &input_name, bool use_line_numbers)
+{
+    InputBase::open_string(input_string, input_name, use_line_numbers);
+    ResetForNewInput();
+    IstreamIterator(std::istream_iterator<char>(in()));
+    // unlimited readahead (read the whole file immediately)
+    InputReadahead(0);
+}
+
+void Scanner::open_using_stream (std::istream *input_stream, std::string const &input_name, bool use_line_numbers)
+{
+    InputBase::open_using_stream(input_stream, input_name, use_line_numbers);
+    ResetForNewInput();
+    IstreamIterator(std::istream_iterator<char>(in()));
+    // unlimited readahead (read the whole file immediately)
+    InputReadahead(0);
+}
+
+FiRange Scanner::UpdateCursorAndGetFiRange (std::string const &accepted_string)
+{
+    FiPos start(fipos());
+    std::string::size_type pos = 0;
+    std::string::size_type next_pos = 0;
+//     std::cerr << "\n\n\nstarting; fipos() = " << fipos() << ", pos = " << pos << ", next_pos = " << next_pos << '\n';
+    while (true)
+    {
+//         std::cerr << "iteration; fipos() = " << fipos() << ", pos = " << pos << ", next_pos = " << next_pos << '\n';
+        next_pos = accepted_string.find('\n', pos);
+        if (next_pos >= accepted_string.size())
+        {
+            increment_column_number(accepted_string.size() - pos);
+//             std::cerr << "finishing; fipos() = " << fipos() << ", pos = " << pos << ", next_pos = " << next_pos << '\n';
+            break;
+        }
+        else
+        {
+            assert(accepted_string[next_pos] == '\n');
+            increment_line_number();
+            set_column_number(1);
+//             std::cerr << "incremented line, reset column; fipos() = " << fipos() << ", pos = " << pos << ", next_pos = " << next_pos << '\n';
+            pos = next_pos+1;
+        }
+    }
+    FiPos end(fipos());
+
+//     std::cerr << "input_name() = " << input_name() << ", start = " << start << ", end = " << end << '\n';
+
+    if (!input_name().empty())
+        return FiRange(input_name(), start, end);
+    else
+        return FiRange::INVALID;
+}
+%}
+%target.cpp.constructor_actions {
+}
+%target.cpp.destructor_actions {
+}
+%target.cpp.bottom_of_scan_method_actions %{
+    assert(false && "you didn't handle EOF properly");
+    return Parser::Token(Parser::Terminal::END_, sem::make_dummy(UpdateCursorAndGetFiRange(work_string)));
+%}
+%target.cpp.bottom_of_implementation_file %{
+} // end namespace text
+} // end namespace cbz
+%}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner I/O parameters
+// ///////////////////////////////////////////////////////////////////////////
+
+%target.cpp.return_type "Parser::Token"
+%target.cpp.rejection_actions {
+    m_record_recoverable_error(
+        UpdateCursorAndGetFiRange(std::string(1, rejected_atom)),
+        "unrecognized character " + char_literal_of(rejected_atom)
+    );
+}
+%target.cpp.reset_for_new_input_actions {
+}
+
+// ///////////////////////////////////////////////////////////////////////////
+// cpp scanner misc directives
+// ///////////////////////////////////////////////////////////////////////////
+
+// this adds a lot of string content to parser source
+%target.cpp.generate_debug_spew_code
+%target.cpp.debug_spew_prefix {"Scanner" << (firange().is_valid() ? " ("+firange().as_string()+")" : std::string()) << ":"}
+
+// ///////////////////////////////////////////////////////////////////////////
+// target-independent scanner directives
+// ///////////////////////////////////////////////////////////////////////////
+
+// integer literals
+%macro UNSIGNED_INT_LITERAL                 ([1-9][0-9]*|0) // can't start with 0 unless it is 0.
+// %macro SIGNED_INT_LITERAL                   ([+\-]?{UNSIGNED_INT_LITERAL}) // note that the sign is part of the literal.
+
+// decimal representation of real number (optionally using scientific notation)
+%macro DECIMAL_PART                         ({UNSIGNED_INT_LITERAL}\.[0-9]*)
+%macro EXPONENT_PART                        ([eE][+\-]?{UNSIGNED_INT_LITERAL})
+%macro UNSIGNED_DECIMAL_LITERAL             ({UNSIGNED_INT_LITERAL}{EXPONENT_PART}|{DECIMAL_PART}{EXPONENT_PART}?)
+// %macro SIGNED_DECIMAL_LITERAL               ([+\-]?{UNSIGNED_DECIMAL_LITERAL})
+
+// a single octal (base 8) digit
+%macro OCT_DIGIT                ([0-7])
+// an octal escape char (e.g. \42)
+%macro OCT_CHAR                 (\\{OCT_DIGIT}+)
+
+// a single hexadecimal (base 16) digit
+%macro HEX_DIGIT                ([0-9A-Fa-f])
+// a hexadecimal escape char (e.g. \xF9)
+%macro HEX_CHAR                 (\\x{HEX_DIGIT}+)
+
+// an escaped char literal (e.g. '\t', '\0' or even '\j')
+%macro CHAR_ESC_CHAR            (\\[[:print:]])
+// everything that doesn't need to be escaped in a char literal (e.g. 'p')
+%macro CHAR_NORMAL_CHAR         ([^[:cntrl:]"'\\]) // this " is so my stupid syntax highlighting behaves.
+
+// single-char escape codes for a string literal (e.g. \n is newline)
+%macro STRING_ESC_CHAR          (\\[[:print:]])
+// malformed single-char escape codes for a string literal (e.g. a backslash followed by a tab)
+%macro STRING_BAD_ESC_CHAR      (\\[^[:print:]])
+// everything that doesn't need to be escaped in a string literal
+%macro STRING_NORMAL_CHAR       ([^[:cntrl:]"\\]|\t|\n) // this " is so my stupid syntax highlighting behaves.
+
+// C-style identifier
+%macro C_IDENTIFIER                         ([A-Za-z_][_A-Za-z0-9]*)
+
+// a newline preceded by a backslash is ignored (though still increments the line number)
+%macro BACKSLASH                            (\\)
+// newline
+%macro NEWLINE                              (\n)
+// any char
+%macro ANY                                  (\n|.)
+// end-of-file condition
+%macro END_OF_FILE                          (\z)
+// all single-char operators that should be returned by ascii value but should not eat trailing newlines
+// (this is really just unary operators that go on the right of the operand)
+%macro SINGLE_CHAR_OP_DONT_EAT_NEWLINES     ([@#])
+// all single-char operators that should be returned by ascii value and should eat newlines (these
+// are binary operators and unary operators that go on the left of the operand)
+%macro SINGLE_CHAR_OP_DO_EAT_NEWLINES       ([:+\-*&%/\^])
+// brackets come in open and close form.  comma interacts with brackets.
+%macro CURLYBRACE_OPEN                      (\{)
+%macro CURLYBRACE_CLOSE                     (\})
+%macro PAREN_OPEN                           (\()
+%macro PAREN_CLOSE                          (\))
+%macro BRACKET_OPEN                         (\[)
+%macro BRACKET_CLOSE                        (\])
+%macro COMMA                                (,)
+// escaped newline as in Python
+%macro ESCAPED_NEWLINE                      ({BACKSLASH}{NEWLINE})
+// whitespace includes escaped newlines
+%macro WHITESPACE                           ([ \t]|{ESCAPED_NEWLINE})
+// whitespace or newline
+%macro WHITESPACE_OR_NEWLINE                (({WHITESPACE}|{NEWLINE}))
+// string of whitespace with at least one newline in it
+%macro WHITESPACE_WITH_AT_LEAST_ONE_NEWLINE ({WHITESPACE}*\n{WHITESPACE}*)
+// statement delimiter is any string of semicolons or newlines, possibly with whitespace.
+%macro STATEMENT_DELIMITER                  ({WHITESPACE}*(;|{NEWLINE})({WHITESPACE}|;|{NEWLINE})*)
+
+%start_with_state_machine MAIN
+
+%%
+
+// ///////////////////////////////////////////////////////////////////////////
+// state machines and constituent regex rules
+// ///////////////////////////////////////////////////////////////////////////
+
+%state_machine MAIN
+:
+    (/[*]) // opening delimiter for a block comment
+    %target.cpp {
+        UpdateCursorAndGetFiRange(accepted_string);
+        SwitchToStateMachine(StateMachine::BLOCK_COMMENT);
+    }
+|
+    (//.*) // line comment (not including the newline)
+    %target.cpp {
+        UpdateCursorAndGetFiRange(accepted_string);
+    }
+
+|   (TRUE)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::VALUE_LITERAL,
+            sem::make_boolean_value(UpdateCursorAndGetFiRange(accepted_string), true)
+        );
+    }
+|   (FALSE)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::VALUE_LITERAL,
+            sem::make_boolean_value(UpdateCursorAndGetFiRange(accepted_string), false)
+        );
+    }
+|   (null)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::VALUE_LITERAL,
+            sem::make_null_value(UpdateCursorAndGetFiRange(accepted_string))
+        );
+    }
+|   (Null)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::NULL_TYPE,
+            sem::make_void_type(UpdateCursorAndGetFiRange(accepted_string))
+        );
+    }
+|   (void)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::VALUE_LITERAL,
+            sem::make_void_value(UpdateCursorAndGetFiRange(accepted_string))
+        );
+    }
+|   (Void)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::VOID_TYPE,
+            sem::make_void_type(UpdateCursorAndGetFiRange(accepted_string))
+        );
+    }
+|   ({UNSIGNED_INT_LITERAL})
+    %target.cpp {
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string));
+        int64_t value;
+        try {
+            value = string_to_int64_t(accepted_string);
+            return Parser::Token(
+                Parser::Terminal::VALUE_LITERAL,
+                sem::make_sint64_value(firange, value)
+            );
+        } catch (std::out_of_range const &e) {
+            m_record_recoverable_error(firange, "integer literal " + accepted_string + " out of range");
+            return Parser::Token(Parser::Terminal::BAD_TOKEN, sem::make_error_dummy(firange));
+        }
+    }
+|   ({UNSIGNED_DECIMAL_LITERAL})
+    %target.cpp {
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string));
+        double value;
+        try {
+            value = string_to_double(accepted_string);
+            return Parser::Token(
+                Parser::Terminal::VALUE_LITERAL,
+                sem::make_float64_value(firange, value)
+            );
+        } catch (std::out_of_range const &e) {
+            m_record_recoverable_error(firange, "decimal literal " + accepted_string + " out of range");
+            return Parser::Token(Parser::Terminal::BAD_TOKEN, sem::make_error_dummy(firange));
+        }
+    }
+
+|   (Boolean)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::BOOLEAN,
+            sem::make_boolean(UpdateCursorAndGetFiRange(accepted_string)));
+    }
+|   (Sint8)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::SINT8,
+            sem::make_sint8(UpdateCursorAndGetFiRange(accepted_string))
+        );
+    }
+|   (Sint16)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::SINT16,
+            sem::make_sint16(UpdateCursorAndGetFiRange(accepted_string))
+        );
+    }
+|   (Sint32)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::SINT32,
+            sem::make_sint32(UpdateCursorAndGetFiRange(accepted_string))
+        );
+    }
+|   (Sint64)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::SINT64,
+            sem::make_sint64(UpdateCursorAndGetFiRange(accepted_string))
+        );
+    }
+|   (Uint8)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::UINT8,
+            sem::make_uint8(UpdateCursorAndGetFiRange(accepted_string))
+        );
+    }
+|   (Uint16)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::UINT16,
+            sem::make_uint16(UpdateCursorAndGetFiRange(accepted_string))
+        );
+    }
+|   (Uint32)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::UINT32,
+            sem::make_uint32(UpdateCursorAndGetFiRange(accepted_string))
+        );
+    }
+|   (Uint64)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::UINT64,
+            sem::make_uint64(UpdateCursorAndGetFiRange(accepted_string))
+        );
+    }
+|   (Float32)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::FLOAT32,
+            sem::make_float32(UpdateCursorAndGetFiRange(accepted_string))
+        );
+    }
+|   (Float64)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::FLOAT64,
+            sem::make_float64(UpdateCursorAndGetFiRange(accepted_string))
+        );
+    }
+|   (Type)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::TYPE_KEYWORD,
+            sem::make_type_keyword(UpdateCursorAndGetFiRange(accepted_string))
+        );
+    }
+
+    // keywords with optional arguments can't be followed by an optional newline
+|   (break)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::BREAK,
+            sem::make_break(UpdateCursorAndGetFiRange(accepted_string))
+        );
+    }
+|   (return)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::RETURN,
+            sem::make_return(UpdateCursorAndGetFiRange(accepted_string))
+        );
+    }
+
+    // keywords with required arguments can be followed by an optional newline
+|
+    (external{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 8-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+8);
+        return Parser::Token(Parser::Terminal::EXTERNAL, sem::make_dummy(firange));
+    }
+|
+    (internal{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 8-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+8);
+        return Parser::Token(Parser::Terminal::INTERNAL, sem::make_dummy(firange));
+    }
+|
+    (private{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 7-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+7);
+        return Parser::Token(Parser::Terminal::PRIVATE, sem::make_dummy(firange));
+    }
+|
+    (local{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 5-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+5);
+        return Parser::Token(Parser::Terminal::LOCAL, sem::make_dummy(firange));
+    }
+|
+    (global{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 6-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+6);
+        return Parser::Token(Parser::Terminal::GLOBAL, sem::make_dummy(firange));
+    }
+|
+    (ct{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 2-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+2);
+        return Parser::Token(Parser::Terminal::CT, sem::make_dummy(firange));
+    }
+|
+    (rt{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 2-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+2);
+        return Parser::Token(Parser::Terminal::RT, sem::make_dummy(firange));
+    }
+|
+    (if{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 2-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+2);
+        return Parser::Token(Parser::Terminal::IF, sem::make_dummy(firange));
+    }
+|
+    (then{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 4-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+4);
+        return Parser::Token(Parser::Terminal::THEN, sem::make_dummy(firange));
+    }
+|
+    (otherwise{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 9-char FiRange at the beginning of the
+        // accepted string FiRange.  In particular, "otherwise" has 9 chars.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+9);
+        return Parser::Token(Parser::Terminal::OTHERWISE, sem::make_dummy(firange));
+    }
+|
+    (while{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 5-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+5);
+        return Parser::Token(Parser::Terminal::WHILE, sem::make_dummy(firange));
+    }
+|
+    (do{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 2-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+2);
+        return Parser::Token(Parser::Terminal::DO, sem::make_dummy(firange));
+    }
+
+    // keyword-style unary operators can be followed by an optional newline
+|
+    (not{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 3-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+3);
+        return Parser::Token(Parser::Terminal::NOT, sem::make_dummy(firange));
+    }
+
+    // binary operators can be followed by an optional newline
+|
+    (and{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 3-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+3);
+        return Parser::Token(Parser::Terminal::AND, sem::make_dummy(firange));
+    }
+|
+    (or{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 2-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+2);
+        return Parser::Token(Parser::Terminal::OR, sem::make_dummy(firange));
+    }
+|
+    (xor{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 3-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+3);
+        return Parser::Token(Parser::Terminal::XOR, sem::make_dummy(firange));
+    }
+|
+    (__llvm_cast_[a-z]+__)
+    %target.cpp {
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string));
+        // Just parse out the identifier part, not the known __llvm_cast_ prefix or __ suffix.
+        std::string instruction_name{accepted_string.substr(12, accepted_string.size()-14)};
+        return Parser::Token(
+            Parser::Terminal::LLVM_CAST_KEYWORD,
+            sem::make_llvm_cast_keyword(
+                firange,
+                sem::llvm_cast_instruction_from_string(instruction_name, firange)
+            )
+        );
+    }
+|
+    (__nullptr__)
+    %target.cpp {
+        return Parser::Token(Parser::Terminal::NULLPTR, sem::make_dummy(UpdateCursorAndGetFiRange(accepted_string)));
+    }
+|
+    // For now, this is just used for some experimental parser rules that test the parser, but that stuff
+    // should be moved into tests for trison within the barf project itself.
+    (<>{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 2-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+2);
+        return Parser::Token(Parser::Terminal::FANCYOP, sem::make_dummy(firange));
+    }
+|
+    (=={WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 2-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+2);
+        return Parser::Token(Parser::Terminal::EQUALS, sem::make_dummy(firange));
+    }
+|
+    (!={WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 2-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+2);
+        return Parser::Token(Parser::Terminal::NOT_EQUALS, sem::make_dummy(firange));
+    }
+
+|
+    (->{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 2-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+2);
+        return Parser::Token(Parser::Terminal::MAPS_TO, sem::make_dummy(firange));
+    }
+
+|
+    (:={WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 2-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+2);
+        return Parser::Token(Parser::Terminal::INITIALIZE, sem::make_dummy(firange));
+    }
+|
+    (::={WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 3-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+3);
+        return Parser::Token(Parser::Terminal::DEFINE, sem::make_dummy(firange));
+    }
+|
+    (={WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 1-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+1);
+        return Parser::Token(Parser::Terminal::ASSIGN, sem::make_dummy(firange));
+    }
+
+|
+    (<{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 1-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+1);
+        return Parser::Token(Parser::Terminal::LESS_THAN, sem::make_dummy(firange));
+    }
+|
+    (>{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 1-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+1);
+        return Parser::Token(Parser::Terminal::GREATER_THAN, sem::make_dummy(firange));
+    }
+|
+    (<={WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 2-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+2);
+        return Parser::Token(Parser::Terminal::LESS_OR_EQUAL, sem::make_dummy(firange));
+    }
+|
+    (>={WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 2-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+2);
+        return Parser::Token(Parser::Terminal::GREATER_OR_EQUAL, sem::make_dummy(firange));
+    }
+|
+    ({SINGLE_CHAR_OP_DONT_EAT_NEWLINES}{WHITESPACE}*)
+    %target.cpp {
+        // This firange expression renders the 1-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+1);
+        return Parser::Token(Parser::Terminal::Name(accepted_string[0]), sem::make_dummy(firange));
+    }
+|
+    ({SINGLE_CHAR_OP_DO_EAT_NEWLINES}{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 1-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+1);
+        return Parser::Token(Parser::Terminal::Name(accepted_string[0]), sem::make_dummy(firange));
+    }
+|
+    (') // this ' is so my stupid syntax highlighting behaves.
+        // opening quote for a char literal
+    %target.cpp {
+        assert(m_char_literal == nullptr);
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string));
+        m_char_literal = sem::make_uint8_value(firange, 0); // 0 is a dummy value, and will be overwritten later.
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_GUTS);
+    }
+|
+    (") // this " is so my stupid syntax highlighting behaves.
+        // opening quote for a string literal
+    %target.cpp {
+        assert(m_string_literal == nullptr);
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string));
+        m_string_literal = sem::make_string_literal(firange);
+        SwitchToStateMachine(StateMachine::STRING_LITERAL_GUTS);
+    }
+|
+    // The following 4 rules are split up in order to be more readable.  There's probably
+    // a simpler regex that handles all the cases, but the level of explicitness was chosen
+    // in order to be more readable.
+
+    (::)
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::IDENTIFIER,
+            sem::make_identifier(UpdateCursorAndGetFiRange(accepted_string), accepted_string)
+        );
+    }
+|
+    ((\$\$)?{C_IDENTIFIER}(::(\$\$)?{C_IDENTIFIER})*)   // Definitely doesn't begin or end with ::
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::IDENTIFIER,
+            sem::make_identifier(UpdateCursorAndGetFiRange(accepted_string), accepted_string)
+        );
+    }
+|
+    ((::)?((\$\$)?{C_IDENTIFIER}::)+)                   // May begin with :: and definitely ends with ::
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::IDENTIFIER,
+            sem::make_identifier(UpdateCursorAndGetFiRange(accepted_string), accepted_string)
+        );
+    }
+|
+    ((::(\$\$)?{C_IDENTIFIER})+(::)?)                   // Definitely begins with :: and may end with ::
+    %target.cpp {
+        return Parser::Token(
+            Parser::Terminal::IDENTIFIER,
+            sem::make_identifier(UpdateCursorAndGetFiRange(accepted_string), accepted_string)
+        );
+    }
+
+|
+    ({CURLYBRACE_OPEN}{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 1-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+1);
+        return Parser::Token(Parser::Terminal::Name(accepted_string.front()), sem::make_dummy(firange));
+    }
+|
+//     ({WHITESPACE_OR_NEWLINE}*{CURLYBRACE_CLOSE})
+    // A close curly brace doesn't eat up the newlines that precede it.
+    ({WHITESPACE}*{CURLYBRACE_CLOSE})
+    %target.cpp {
+        // This firange expression renders the 1-char FiRange at the end of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).end_as_firange()-1);
+        return Parser::Token(Parser::Terminal::Name(accepted_string.back()), sem::make_dummy(firange));
+    }
+|
+    ({PAREN_OPEN}{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 1-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+1);
+        return Parser::Token(Parser::Terminal::Name(accepted_string.front()), sem::make_dummy(firange));
+    }
+|
+    // A close paren eats up the newlines that precede it.
+    ({WHITESPACE_OR_NEWLINE}*{PAREN_CLOSE})
+    %target.cpp {
+        // This firange expression renders the 1-char FiRange at the end of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).end_as_firange()-1);
+        return Parser::Token(Parser::Terminal::Name(accepted_string.back()), sem::make_dummy(firange));
+    }
+|
+    ({BRACKET_OPEN}{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 1-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+1);
+        return Parser::Token(Parser::Terminal::Name(accepted_string.front()), sem::make_dummy(firange));
+    }
+|
+    // A close bracket eats up the newlines that precede it.
+    ({WHITESPACE_OR_NEWLINE}*{BRACKET_CLOSE})
+    %target.cpp {
+        // This firange expression renders the 1-char FiRange at the end of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).end_as_firange()-1);
+        return Parser::Token(Parser::Terminal::Name(accepted_string.back()), sem::make_dummy(firange));
+    }
+|
+//     ({WHITESPACE_OR_NEWLINE}*{COMMA}{WHITESPACE_OR_NEWLINE}*)
+//     ({WHITESPACE}*{COMMA}{WHITESPACE_OR_NEWLINE}*)
+    ({COMMA}{WHITESPACE_OR_NEWLINE}*)
+    %target.cpp {
+        // This firange expression renders the 1-char FiRange at the beginning of the accepted string FiRange.
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string).start_as_firange()+1);
+        return Parser::Token(Parser::Terminal::Name(','), sem::make_dummy(firange));
+    }
+|
+    ({WHITESPACE}+) // ignore all whitespace
+    %target.cpp {
+        UpdateCursorAndGetFiRange(accepted_string);
+    }
+|
+    ({STATEMENT_DELIMITER})
+    %target.cpp {
+        return Parser::Token(Parser::Terminal::STATEMENT_DELIMITER, sem::make_dummy(UpdateCursorAndGetFiRange(accepted_string)));
+    }
+|
+    ({END_OF_FILE})
+    %target.cpp {
+        return Parser::Token(Parser::Terminal::END_, sem::make_dummy(UpdateCursorAndGetFiRange(accepted_string)));
+    }
+|
+    (.)
+    %target.cpp {
+        assert(accepted_string.size() == 1);
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string));
+        m_record_recoverable_error(firange, "unexpected character " + char_literal_of(accepted_string[0]));
+        return Parser::Token(Parser::Terminal::BAD_TOKEN, sem::make_dummy(firange));
+    }
+;
+
+%state_machine BLOCK_COMMENT %ungreedy
+:
+    ({ANY}*[*]/) // everything up through the closing delimiter of a block comment
+    %target.cpp {
+        UpdateCursorAndGetFiRange(accepted_string);
+        SwitchToStateMachine(StateMachine::MAIN);
+    }
+|
+    ({ANY}*{END_OF_FILE}) // everything up through EOF
+    %target.cpp {
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string));
+        m_record_message(firange, "warning: unterminated block comment");
+        // Because {END_OF_FILE} is only a condition and doesn't correspond to any actual chars,
+        // This second call to UpdateCursorAndGetFiRange will produce a 0-length FiRange, which
+        // is what we want here.
+        return Parser::Token(Parser::Terminal::END_, sem::make_dummy(firange));
+    }
+;
+
+%state_machine CHAR_LITERAL_GUTS
+:
+    ({OCT_CHAR})
+    %target.cpp {
+        assert(accepted_string.length() >= 2);
+        assert(accepted_string[0] == '\\');
+        assert(m_char_literal != nullptr);
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string));
+
+        uint32_t value = strtol(accepted_string.c_str()+1, nullptr, 8);
+        if (value >= 0x100)
+            m_record_recoverable_error(firange, "octal character literal value out of range (" + accepted_string + ")");
+
+        m_char_literal->grow_firange(firange);
+        m_char_literal->set_value(uint8_t(value));
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
+    }
+|
+    ({HEX_CHAR})
+    %target.cpp {
+        assert(accepted_string.length() >= 3);
+        assert(accepted_string[0] == '\\');
+        assert(accepted_string[1] == 'x');
+        assert(m_char_literal != nullptr);
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string));
+
+        uint32_t value = strtol(accepted_string.c_str()+2, nullptr, 16);
+        if (value >= 0x100)
+            m_record_recoverable_error(firange, "hexadecimal character literal value out of range (" + accepted_string + ")");
+
+        m_char_literal->grow_firange(firange);
+        m_char_literal->set_value(uint8_t(value));
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
+    }
+|
+    ({CHAR_ESC_CHAR})
+    %target.cpp {
+        assert(accepted_string.length() == 2);
+        assert(accepted_string[0] == '\\');
+        assert(m_char_literal != nullptr);
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string));
+        m_char_literal->grow_firange(firange);
+        m_char_literal->set_value(uint8_t(escaped_char(uint8_t(accepted_string[1]))));
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
+    }
+|
+    ({CHAR_NORMAL_CHAR})
+    %target.cpp {
+        assert(accepted_string.length() == 1);
+        assert(m_char_literal != nullptr);
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string));
+        m_char_literal->grow_firange(firange);
+        m_char_literal->set_value(uint8_t(accepted_string[0]));
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
+    }
+|
+    (\\?{END_OF_FILE}) // end of file (which may be preceded by a backslash)
+    %target.cpp {
+        assert(m_char_literal != nullptr);
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string));
+        m_char_literal->grow_firange(firange);
+        m_record_recoverable_error(m_char_literal->firange(), "unterminated character literal");
+        m_char_literal.reset();
+        // NOTE: The scanner will next return Parser::Terminal::END_, since the
+        // {END_OF_FILE} condition will still be true.
+        return Parser::Token(Parser::Terminal::BAD_TOKEN, sem::make_dummy(firange));
+    }
+|
+    ({ANY}) // anything else just means it's malformed
+    %target.cpp {
+        assert(m_char_literal != nullptr);
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string));
+        m_record_recoverable_error(firange, "unexpected character " + char_literal_of(accepted_string[0]) + " in character literal");
+        m_char_literal->grow_firange(firange);
+        m_char_literal->set_value(uint8_t(accepted_string[0]));
+        SwitchToStateMachine(StateMachine::CHAR_LITERAL_END);
+    }
+;
+
+%state_machine CHAR_LITERAL_END
+:
+    (') // this ' is so my stupid syntax highlighting behaves.
+        // closing single-quote
+    %target.cpp {
+        assert(m_char_literal != nullptr);
+        m_char_literal->grow_firange(UpdateCursorAndGetFiRange(accepted_string));
+        SwitchToStateMachine(StateMachine::MAIN);
+        up<sem::Uint8Value> return_token = std::move(m_char_literal);
+        assert(m_char_literal == nullptr);
+        return Parser::Token(Parser::Terminal::VALUE_LITERAL, std::move(return_token));
+    }
+|
+    (\\?{END_OF_FILE}) // end of file (which may be preceded by a backslash)
+    %target.cpp {
+        assert(m_char_literal != nullptr);
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string));
+        m_char_literal->grow_firange(UpdateCursorAndGetFiRange(accepted_string));
+        m_record_recoverable_error(m_char_literal->firange(), "unterminated character literal");
+        m_char_literal.reset();
+        SwitchToStateMachine(StateMachine::MAIN);
+        return Parser::Token(Parser::Terminal::END_, sem::make_dummy(firange));
+    }
+|
+    ({ANY}) // anything else just means it's malformed
+    %target.cpp {
+        assert(m_char_literal != nullptr);
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string));
+        m_char_literal->grow_firange(UpdateCursorAndGetFiRange(accepted_string));
+        m_record_recoverable_error(m_char_literal->firange(), "malformed character literal");
+        m_char_literal.reset();
+        SwitchToStateMachine(StateMachine::MAIN);
+        return Parser::Token(Parser::Terminal::BAD_TOKEN, sem::make_dummy(firange));
+    }
+;
+
+%state_machine STRING_LITERAL_GUTS %ungreedy
+:
+    (([^\\]|\\{ANY})*") // this " is so my stupid syntax highlighting behaves.
+                        // everything up through the first unescaped double quote
+    %target.cpp {
+        assert(m_string_literal != nullptr);
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string));
+        m_string_literal->grow_firange(firange);
+        // get rid of the trailing endquote
+        assert(accepted_string.length() >= 1);
+        accepted_string.resize(accepted_string.length()-1);
+        // escape the string in-place and handle the return code
+        EscapeStringStatus status = escape_string(accepted_string);
+        switch (status.m_return_code)
+        {
+            case EscapeStringReturnCode::SUCCESS:
+                // awesome
+                break;
+
+            case EscapeStringReturnCode::UNEXPECTED_EOI:
+                assert(false && "the formulation of the regex should prevent this");
+                break;
+
+            case EscapeStringReturnCode::MALFORMED_HEX_CHAR:
+                // TODO: Make the firange precise as below
+                m_record_recoverable_error(m_string_literal->firange(), "\\x with no trailing hex digits in string literal");
+                //emit_error(
+                //    DebugSpewStream(),
+                //    "\\x with no trailing hex digits",
+                //    FiLoc(token->filoc().filename(),
+                //          token->filoc().line_number() + status.m_line_number_offset));
+                break;
+
+            case EscapeStringReturnCode::HEX_ESCAPE_SEQUENCE_OUT_OF_RANGE:
+            case EscapeStringReturnCode::OCTAL_ESCAPE_SEQUENCE_OUT_OF_RANGE:
+                // TODO: Make the firange precise as below
+                m_record_recoverable_error(m_string_literal->firange(), "hex/octal escape sequence out of range in string literal");
+                //emit_error(
+                //    DebugSpewStream(),
+                //    "hex/octal escape sequence out of range",
+                //    FiLoc(token->filoc().filename(),
+                //          token->filoc().line_number() + status.m_line_number_offset));
+                break;
+        }
+        m_string_literal->accumulate_text(accepted_string);
+        SwitchToStateMachine(StateMachine::MAIN);
+        up<sem::StringLiteral> return_token = std::move(m_string_literal);
+        assert(m_string_literal == nullptr);
+        return Parser::Token(Parser::Terminal::STRING_LITERAL, std::move(return_token));
+    }
+|
+    (([^\\]|\\{ANY})*\\?{END_OF_FILE}) // everything up through EOF (which may be preceded by a hanging backslash)
+    %target.cpp {
+        assert(m_string_literal != nullptr);
+        FiRange firange(UpdateCursorAndGetFiRange(accepted_string));
+        m_string_literal->grow_firange(firange);
+        m_record_recoverable_error(m_string_literal->firange(), "unterminated string literal");
+        m_string_literal.reset();
+        return Parser::Token(Parser::Terminal::END_, sem::make_dummy(firange));
+    }
+;
