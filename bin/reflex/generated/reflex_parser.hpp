@@ -17,7 +17,7 @@
 #include <vector>
 
 
-#line 19 "../app/reflex/reflex_parser.trison"
+#line 19 "../bin/reflex/reflex_parser.trison"
 
 #if !defined(REFLEX_PARSER_HPP_)
 #define REFLEX_PARSER_HPP_
@@ -50,7 +50,7 @@ struct RegularExpressionMap;
 
 namespace Reflex {
 
-#line 54 "../app/reflex/generated/reflex_parser.hpp"
+#line 54 "../bin/reflex/generated/reflex_parser.hpp"
 
 /// @brief A parser class.
 ///
@@ -363,7 +363,7 @@ public:
     ParserReturnCode Parse (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::root);
 
 
-#line 52 "../app/reflex/reflex_parser.trison"
+#line 52 "../bin/reflex/reflex_parser.trison"
 
     FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
     CommonLang::TargetMap &GetTargetMap () { assert(m_target_map != NULL); return *m_target_map; }
@@ -387,7 +387,7 @@ private:
     // This is a member var because THERE CAN BE ONLY ONE.
     StartWithStateMachineDirective *m_start_with_state_machine_directive;
 
-#line 391 "../app/reflex/generated/reflex_parser.hpp"
+#line 391 "../bin/reflex/generated/reflex_parser.hpp"
 
 
 private:
@@ -1035,10 +1035,10 @@ std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser
 // so there would need to be some sort of strong typedef involved for this to be well-defined.
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
-#line 75 "../app/reflex/reflex_parser.trison"
+#line 75 "../bin/reflex/reflex_parser.trison"
 
 } // end of namespace Reflex
 
 #endif // !defined(REFLEX_PARSER_HPP_)
 
-#line 1045 "../app/reflex/generated/reflex_parser.hpp"
+#line 1045 "../bin/reflex/generated/reflex_parser.hpp"

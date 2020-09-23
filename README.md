@@ -58,21 +58,35 @@ within in, then build and install.  Example commands:
     cd barf
     mkdir build
     cd build
-    cmake -D CMAKE_BUILD_TYPE=Release ..
+    cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr ..
 
 The above invocation of cmake specifies `Release` mode, which will generate Makefiles
-to build the tools with compiler optimizations enabled.  Then build and install the
-tools as follows.
+to build the tools with compiler optimizations enabled.  The choice of `/usr` for
+`CMAKE_INSTALL_PREFIX` is so that the correct path is hardcoded into the `reflex`
+and `trison` binaries for where to find their targetspec files assuming they'll be
+installed system-wide (a local installation, e.g. by a user, would use the default
+`-D CMAKE_INSTALL_PREFIX=/usr/local`).  Then build and install the tools in one of
+the two following ways:
+
+As a `.deb` package:
+
+    make package
+    sudo dpkg -i barf-X.Y.Z.deb
+
+where `X.Y.Z` is the version.  Using the debian package manager makes it trivial to
+track the installed version, upgrade, or remove the package.
+
+As an old-fashioned installation:
 
     make
     make install
 
-On Linux (and probably Mac OS X) this will install the resources to `/usr/local/lib/barf`
-which notably includes the barf targets dir, which contains the code templates for
-generating code from reflex or trison source.  The tool binaries `bpp`, `reflex`, and
-`trison` will be installed to `/usr/local/bin`.  The install location can be modified
-in the usual cmake way using the config variable `CMAKE_INSTALL_PREFIX` (which in this
-case is `/usr/local`).  To run cmake in interactive mode:
+On Linux (and probably Mac OS X) this will install the resources to `${CMAKE_INSTALL_PREFIX}/lib/barf`
+which notably includes the barf targets dir, which contains the code templates for generating
+code from reflex or trison source.  The tool binaries `bpp`, `reflex`, and `trison` will be
+installed to `${CMAKE_INSTALL_PREFIX}/bin`.
+
+To run cmake in interactive mode:
 
     cd build
     ccmake ..

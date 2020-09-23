@@ -17,7 +17,7 @@
 #include <vector>
 
 
-#line 18 "../app/trison/trison_parser.trison"
+#line 18 "../bin/trison/trison_parser.trison"
 
 #if !defined(TRISON_PARSER_HPP_)
 #define TRISON_PARSER_HPP_
@@ -52,7 +52,7 @@ struct PrecedenceMap;
 struct TerminalList;
 struct TerminalMap;
 
-#line 56 "../app/trison/generated/trison_parser.hpp"
+#line 56 "../bin/trison/generated/trison_parser.hpp"
 
 /// @brief A parser class.
 ///
@@ -380,7 +380,7 @@ public:
     ParserReturnCode Parse (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::root);
 
 
-#line 53 "../app/trison/trison_parser.trison"
+#line 53 "../bin/trison/trison_parser.trison"
 
     inline FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
     CommonLang::TargetMap &GetTargetMap () { assert(m_target_map != NULL); return *m_target_map; }
@@ -408,7 +408,7 @@ private:
     NonterminalMap *m_nonterminal_map;
     Uint32 m_rule_count;
 
-#line 412 "../app/trison/generated/trison_parser.hpp"
+#line 412 "../bin/trison/generated/trison_parser.hpp"
 
 
 private:
@@ -1056,10 +1056,10 @@ std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser
 // so there would need to be some sort of strong typedef involved for this to be well-defined.
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
-#line 80 "../app/trison/trison_parser.trison"
+#line 80 "../bin/trison/trison_parser.trison"
 
 } // end of namespace Trison
 
 #endif // !defined(TRISON_PARSER_HPP_)
 
-#line 1066 "../app/trison/generated/trison_parser.hpp"
+#line 1066 "../bin/trison/generated/trison_parser.hpp"

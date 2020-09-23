@@ -5,6 +5,7 @@ build/
 build2/
 build3/
 build4/
+build.old/
 compile
 config.guess
 config.h.in
