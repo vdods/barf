@@ -2,13 +2,13 @@
 
 #pragma once
 
-#include "core.hpp"
-#include "sem/Base.hpp"
-#include "sem/Identifier.hpp"
-#include "sem/Specifier.hpp"
+#include "barftest/core.hpp"
+#include "barftest/sem/Base.hpp"
+#include "barftest/sem/Identifier.hpp"
+#include "barftest/sem/Specifier.hpp"
 #include <string>
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 struct SymbolSpecifier : public Base
@@ -87,4 +87,4 @@ nnup<SymbolSpecifier> make_symbol_specifier (Args_&&... args)
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

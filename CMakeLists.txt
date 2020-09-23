@@ -522,7 +522,7 @@ if(BUILD_barftest)
         bin/barftest/text/Scanner.reflex
     )
     add_executable(barftest ${barftest_SOURCES})
-    target_include_directories(barftest PUBLIC ${barf_SOURCE_DIR}/bin/barftest)
+    target_include_directories(barftest PUBLIC ${barf_SOURCE_DIR}/bin) # So includes look like #include "barftest/sem/Xyz.hpp"
     target_compile_definitions(barftest PUBLIC PACKAGE_VERSION="${barf_VERSION}")
     target_link_libraries(barftest PUBLIC Strict lvd)
 endif()

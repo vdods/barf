@@ -10,17 +10,17 @@
 %target.cpp.implementation_filename "Scanner.cpp"
 
 %target.cpp.top_of_header_file %{
-#include "core.hpp"
-#include "FiRange.hpp"
-#include "InputBase.hpp"
-#include "sem/StringLiteral.hpp"
-#include "sem/Value.hpp"
-#include "text/Parser.hpp"
+#include "barftest/core.hpp"
+#include "barftest/FiRange.hpp"
+#include "barftest/InputBase.hpp"
+#include "barftest/sem/StringLiteral.hpp"
+#include "barftest/sem/Value.hpp"
+#include "barftest/text/Parser.hpp"
 #include <functional>
 #include <fstream>
 #include <sstream>
 
-namespace cbz {
+namespace barftest {
 namespace text {
 %}
 %target.cpp.class_name Scanner
@@ -55,7 +55,7 @@ private:
 }
 %target.cpp.bottom_of_header_file %{
 } // end namespace text
-} // end namespace cbz
+} // end namespace barftest
 %}
 
 // ///////////////////////////////////////////////////////////////////////////
@@ -63,18 +63,18 @@ private:
 // ///////////////////////////////////////////////////////////////////////////
 
 %target.cpp.top_of_implementation_file %{
-#include "literal.hpp"
-#include "sem/Break.hpp"
-#include "sem/Dummy.hpp"
-#include "sem/ErrorDummy.hpp"
-#include "sem/Identifier.hpp"
-#include "sem/LLVMCast.hpp"
-#include "sem/Return.hpp"
-#include "sem/Specifier.hpp"
-#include "sem/Type.hpp"
-#include "sem/Value.hpp"
+#include "barftest/literal.hpp"
+#include "barftest/sem/Break.hpp"
+#include "barftest/sem/Dummy.hpp"
+#include "barftest/sem/ErrorDummy.hpp"
+#include "barftest/sem/Identifier.hpp"
+#include "barftest/sem/LLVMCast.hpp"
+#include "barftest/sem/Return.hpp"
+#include "barftest/sem/Specifier.hpp"
+#include "barftest/sem/Type.hpp"
+#include "barftest/sem/Value.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace text {
 
 bool Scanner::open_file (std::string const &input_filename)
@@ -153,7 +153,7 @@ FiRange Scanner::UpdateCursorAndGetFiRange (std::string const &accepted_string)
 %}
 %target.cpp.bottom_of_implementation_file %{
 } // end namespace text
-} // end namespace cbz
+} // end namespace barftest
 %}
 
 // ///////////////////////////////////////////////////////////////////////////

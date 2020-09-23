@@ -1,8 +1,8 @@
 // 2018.08.30 - Victor Dods
 
-#include "sem/ErrorDummy.hpp"
+#include "barftest/sem/ErrorDummy.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 ErrorDummy *ErrorDummy::cloned () const
@@ -16,4 +16,4 @@ void ErrorDummy::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

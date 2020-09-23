@@ -1,12 +1,12 @@
 // 2016.08.09 - Victor Dods
 
-#include "sem/Assignment.hpp"
+#include "barftest/sem/Assignment.hpp"
 
-#include "Exception.hpp"
-#include "sem/Identifier.hpp"
-#include "sem/Type.hpp"
+#include "barftest/Exception.hpp"
+#include "barftest/sem/Identifier.hpp"
+#include "barftest/sem/Type.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 bool Assignment::equals (Base const &other_) const
@@ -29,4 +29,4 @@ Assignment *Assignment::cloned () const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

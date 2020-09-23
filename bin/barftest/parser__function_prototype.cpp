@@ -1,14 +1,14 @@
 // 2016.08.14 - Victor Dods
 
-#include "sem/Declaration.hpp"
-#include "sem/FunctionPrototype.hpp"
-#include "sem/Identifier.hpp"
-#include "sem/SymbolSpecifier.hpp"
-#include "sem/Value.hpp"
+#include "barftest/sem/Declaration.hpp"
+#include "barftest/sem/FunctionPrototype.hpp"
+#include "barftest/sem/Identifier.hpp"
+#include "barftest/sem/SymbolSpecifier.hpp"
+#include "barftest/sem/Value.hpp"
 #include <lvd/test.hpp>
 #include "UnitTestParser.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace text {
 
 LVD_TEST_BEGIN(00__parser__08__function_prototype__000)
@@ -25,4 +25,4 @@ LVD_TEST_BEGIN(00__parser__08__function_prototype__000)
 LVD_TEST_END
 
 } // end namespace text
-} // end namespace cbz
+} // end namespace barftest

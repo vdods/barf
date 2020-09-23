@@ -1,8 +1,8 @@
 // 2019.04.26 - Victor Dods
 
-#include "sem/Dummy.hpp"
+#include "barftest/sem/Dummy.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 Dummy *Dummy::cloned () const
@@ -16,4 +16,4 @@ void Dummy::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

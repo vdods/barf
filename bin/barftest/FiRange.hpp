@@ -4,8 +4,8 @@
 
 #include <lvd/FiRange.hpp>
 
-namespace cbz {
+namespace barftest {
 
 using lvd::FiRange;
 
-} // end namespace cbz
+} // end namespace barftest

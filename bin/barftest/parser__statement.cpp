@@ -1,24 +1,24 @@
 // 2016.08.14 - Victor Dods
 
-#include "sem/Assignment.hpp"
-#include "sem/BinaryOperation.hpp"
-#include "sem/Break.hpp"
-#include "sem/Conditional.hpp"
-#include "sem/Definition.hpp"
-#include "sem/Function.hpp"
-#include "sem/FunctionEvaluation.hpp"
-#include "sem/FunctionPrototype.hpp"
-#include "sem/Identifier.hpp"
-#include "sem/Initialization.hpp"
-#include "sem/Loop.hpp"
-#include "sem/Return.hpp"
-#include "sem/SymbolSpecifier.hpp"
-#include "sem/Value.hpp"
-#include "sem/Vector.hpp"
+#include "barftest/sem/Assignment.hpp"
+#include "barftest/sem/BinaryOperation.hpp"
+#include "barftest/sem/Break.hpp"
+#include "barftest/sem/Conditional.hpp"
+#include "barftest/sem/Definition.hpp"
+#include "barftest/sem/Function.hpp"
+#include "barftest/sem/FunctionEvaluation.hpp"
+#include "barftest/sem/FunctionPrototype.hpp"
+#include "barftest/sem/Identifier.hpp"
+#include "barftest/sem/Initialization.hpp"
+#include "barftest/sem/Loop.hpp"
+#include "barftest/sem/Return.hpp"
+#include "barftest/sem/SymbolSpecifier.hpp"
+#include "barftest/sem/Value.hpp"
+#include "barftest/sem/Vector.hpp"
 #include <lvd/test.hpp>
 #include "UnitTestParser.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace text {
 
 LVD_TEST_BEGIN(00__parser__07__statement__000)
@@ -172,4 +172,4 @@ LVD_TEST_BEGIN(00__parser__07__statement__010)
 LVD_TEST_END
 
 } // end namespace text
-} // end namespace cbz
+} // end namespace barftest

@@ -4,8 +4,8 @@
 
 #include <lvd/FiLoc.hpp>
 
-namespace cbz {
+namespace barftest {
 
 using lvd::FiLoc;
 
-} // end namespace cbz
+} // end namespace barftest

@@ -1,11 +1,11 @@
 // 2019.09.23 - Victor Dods
 
-#include "sem/ValueLifetime.hpp"
+#include "barftest/sem/ValueLifetime.hpp"
 
-#include "Exception.hpp"
+#include "barftest/Exception.hpp"
 #include <sstream>
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 std::string const &as_string (ValueLifetimeContextual value_lifetime_contextual)
@@ -37,4 +37,4 @@ std::string const &as_string_lowercase (ValueLifetimeContextual value_lifetime_c
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

@@ -7,7 +7,7 @@
 #include "sem/Base.hpp"
 #include "text/Parser.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace text {
 
 enum class RecoverableError
@@ -52,4 +52,4 @@ struct UnitTestParser
 extern UnitTestParser g_unit_test_parser;
 
 } // end namespace text
-} // end namespace cbz
+} // end namespace barftest

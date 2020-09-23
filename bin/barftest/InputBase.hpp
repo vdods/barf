@@ -3,13 +3,13 @@
 #pragma once
 
 #include <cstdint>
-#include "FiLoc.hpp"
-#include "FiPos.hpp"
-#include "FiRange.hpp"
+#include "barftest/FiLoc.hpp"
+#include "barftest/FiPos.hpp"
+#include "barftest/FiRange.hpp"
 #include <fstream>
 #include <sstream>
 
-namespace cbz {
+namespace barftest {
 
 // Provides input facilities -- open_file(), open_string(), open_using_stream()
 // and close() -- scanners and other stuff should inherit this.
@@ -59,4 +59,4 @@ private:
     FiPos m_fipos;
 }; // end of class InputBase
 
-} // end namespace cbz
+} // end namespace barftest

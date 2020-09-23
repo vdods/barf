@@ -2,14 +2,14 @@
 
 #pragma once
 
-#include "core.hpp"
+#include "barftest/core.hpp"
 #include <exception>
-#include "FiRange.hpp"
+#include "barftest/FiRange.hpp"
 #include <lvd/abort.hpp>
 
-namespace cbz {
+namespace barftest {
 
-// The baseclass for all exceptions in cbz
+// The baseclass for all exceptions in barftest
 struct Error : public std::runtime_error
 {
     Error (std::string const &what_arg, FiRange const &firange = FiRange::INVALID)
@@ -25,8 +25,8 @@ private:
     FiRange m_firange;
 };
 
-// This exception is used to indicate an error in the use of cbz, and
-// is part of the correct operation of cbz.  For example, compile-time
+// This exception is used to indicate an error in the use of barftest, and
+// is part of the correct operation of barftest.  For example, compile-time
 // and run-time errors will be indicated via subclasses of this class.
 struct ProgrammerError : public Error
 {
@@ -52,4 +52,4 @@ struct WellFormednessError : public Error
     virtual ~WellFormednessError ();
 };
 
-} // end namespace cbz
+} // end namespace barftest

@@ -1,8 +1,8 @@
 // 2016.08.16 - Victor Dods
 
-#include "Exception.hpp"
+#include "barftest/Exception.hpp"
 
-namespace cbz {
+namespace barftest {
 
 Error::~Error () { }
 
@@ -12,4 +12,4 @@ TypeError::~TypeError () { }
 
 WellFormednessError::~WellFormednessError () { }
 
-} // end namespace cbz
+} // end namespace barftest

@@ -1,12 +1,12 @@
 // 2016.08.14 - Victor Dods
 
-#include "sem/ErrorDummy.hpp"
-#include "sem/Identifier.hpp"
-#include "sem/Vector.hpp"
+#include "barftest/sem/ErrorDummy.hpp"
+#include "barftest/sem/Identifier.hpp"
+#include "barftest/sem/Vector.hpp"
 #include <lvd/test.hpp>
 #include "UnitTestParser.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace text {
 
 LVD_TEST_BEGIN(00__parser__16__parenthesized_id_list__000)
@@ -78,4 +78,4 @@ LVD_TEST_BEGIN(00__parser__16__parenthesized_id_list__004)
 LVD_TEST_END
 
 } // end namespace text
-} // end namespace cbz
+} // end namespace barftest

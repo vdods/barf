@@ -17,37 +17,37 @@
 
 #line 76 "../bin/barftest/text/Parser.trison"
 
-#include "literal.hpp"
-#include "sem/Assignment.hpp"
-#include "sem/BinaryOperation.hpp"
-#include "sem/Break.hpp"
-#include "sem/Conditional.hpp"
-#include "sem/Declaration.hpp"
-#include "sem/Definition.hpp"
-#include "sem/Dummy.hpp"
-#include "sem/ElementAccess.hpp"
-#include "sem/ErrorDummy.hpp"
-#include "sem/Function.hpp"
-#include "sem/FunctionEvaluation.hpp"
-#include "sem/FunctionPrototype.hpp"
-#include "sem/FunctionType.hpp"
-#include "sem/Identifier.hpp"
-#include "sem/Initialization.hpp"
-#include "sem/LLVMCast.hpp"
-#include "sem/Loop.hpp"
-#include "sem/NullPtr.hpp"
-#include "sem/PointerType.hpp"
-#include "sem/ReferenceType.hpp"
-#include "sem/Return.hpp"
-#include "sem/Specifier.hpp"
-#include "sem/SymbolSpecifier.hpp"
-#include "sem/Type.hpp"
-#include "sem/TypeIdentifier.hpp"
-#include "sem/UnaryOperation.hpp"
-#include "sem/Vector.hpp"
-#include "text/Scanner.hpp"
+#include "barftest/literal.hpp"
+#include "barftest/sem/Assignment.hpp"
+#include "barftest/sem/BinaryOperation.hpp"
+#include "barftest/sem/Break.hpp"
+#include "barftest/sem/Conditional.hpp"
+#include "barftest/sem/Declaration.hpp"
+#include "barftest/sem/Definition.hpp"
+#include "barftest/sem/Dummy.hpp"
+#include "barftest/sem/ElementAccess.hpp"
+#include "barftest/sem/ErrorDummy.hpp"
+#include "barftest/sem/Function.hpp"
+#include "barftest/sem/FunctionEvaluation.hpp"
+#include "barftest/sem/FunctionPrototype.hpp"
+#include "barftest/sem/FunctionType.hpp"
+#include "barftest/sem/Identifier.hpp"
+#include "barftest/sem/Initialization.hpp"
+#include "barftest/sem/LLVMCast.hpp"
+#include "barftest/sem/Loop.hpp"
+#include "barftest/sem/NullPtr.hpp"
+#include "barftest/sem/PointerType.hpp"
+#include "barftest/sem/ReferenceType.hpp"
+#include "barftest/sem/Return.hpp"
+#include "barftest/sem/Specifier.hpp"
+#include "barftest/sem/SymbolSpecifier.hpp"
+#include "barftest/sem/Type.hpp"
+#include "barftest/sem/TypeIdentifier.hpp"
+#include "barftest/sem/UnaryOperation.hpp"
+#include "barftest/sem/Vector.hpp"
+#include "barftest/text/Scanner.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace text {
 
 #line 54 "../bin/barftest/text/Parser.cpp"
@@ -8851,6 +8851,6 @@ void Parser::record_recoverable_error (FiRange const &firange, std::string const
 }
 
 } // end namespace text
-} // end namespace cbz
+} // end namespace barftest
 
 #line 8857 "../bin/barftest/text/Parser.cpp"

@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "core.hpp"
+#include "barftest/core.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 enum class DeterminabilityContextual : uint8_t
@@ -34,4 +34,4 @@ enum class Determinability : uint8_t
 // The DeterminabilityContextual as_string should work for Determinability.
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

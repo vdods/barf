@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "sem/Type.hpp"
+#include "barftest/sem/Type.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 struct Identifier;
@@ -38,4 +38,4 @@ nnup<TypeIdentifier> make_type_identifier (Args_&&... args)
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

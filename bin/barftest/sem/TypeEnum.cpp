@@ -1,8 +1,8 @@
 // 2016.08.09 - Victor Dods
 
-#include "sem/TypeEnum.hpp"
+#include "barftest/sem/TypeEnum.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 std::string const &as_string (TypeEnum type_enum)
@@ -79,4 +79,4 @@ std::string const &as_string (TypeEnum type_enum)
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

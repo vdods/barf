@@ -1,8 +1,8 @@
 // 2006.11.10 - Victor Dods
 
-#include "InputBase.hpp"
+#include "barftest/InputBase.hpp"
 
-namespace cbz {
+namespace barftest {
 
 InputBase::InputBase ()
     :   m_input_stream(NULL)
@@ -139,4 +139,4 @@ void InputBase::increment_column_number (uint32_t by_value)
     m_fipos.increment_column(by_value);
 }
 
-} // end namespace cbz
+} // end namespace barftest

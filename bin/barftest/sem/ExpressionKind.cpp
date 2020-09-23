@@ -1,10 +1,10 @@
 // 2019.11.15 - Victor Dods
 
-#include "sem/ExpressionKind.hpp"
+#include "barftest/sem/ExpressionKind.hpp"
 
-#include "Exception.hpp"
+#include "barftest/Exception.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 std::string const &as_string (ExpressionKindContextual expression_kind_contextual)
@@ -23,4 +23,4 @@ std::string const &as_string (ExpressionKindContextual expression_kind_contextua
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

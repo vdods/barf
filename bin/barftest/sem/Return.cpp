@@ -1,8 +1,8 @@
 // 2016.08.10 - Victor Dods
 
-#include "sem/Return.hpp"
+#include "barftest/sem/Return.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 Return::Return (FiRange const &firange, nnup<Base> &&return_expression)
@@ -33,4 +33,4 @@ void Return::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

@@ -1,10 +1,10 @@
 // 2016.08.10 - Victor Dods
 
-#include "sem/Loop.hpp"
+#include "barftest/sem/Loop.hpp"
 
-#include "Exception.hpp"
+#include "barftest/Exception.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 std::string const &as_string (LoopType loop_type)
@@ -55,4 +55,4 @@ void Loop::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

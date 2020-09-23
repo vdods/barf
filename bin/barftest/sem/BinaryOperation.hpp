@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include "core.hpp"
-#include "sem/Base.hpp"
+#include "barftest/core.hpp"
+#include "barftest/sem/Base.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 enum class BinaryOperationType : uint8_t
@@ -66,4 +66,4 @@ nnup<BinaryOperation> make_binary_operation (Args_&&... args)
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

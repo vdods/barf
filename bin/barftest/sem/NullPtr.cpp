@@ -1,10 +1,10 @@
 // 2020.07.07 - Victor Dods
 
-#include "sem/NullPtr.hpp"
+#include "barftest/sem/NullPtr.hpp"
 
-#include "sem/PointerType.hpp"
+#include "barftest/sem/PointerType.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 bool NullPtr::equals (Base const &other_) const
@@ -26,4 +26,4 @@ void NullPtr::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

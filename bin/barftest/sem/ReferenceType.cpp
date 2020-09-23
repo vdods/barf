@@ -1,8 +1,8 @@
 // 2020.06.03 - Victor Dods
 
-#include "sem/ReferenceType.hpp"
+#include "barftest/sem/ReferenceType.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 bool ReferenceType::equals (Base const &other_) const
@@ -25,4 +25,4 @@ void ReferenceType::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

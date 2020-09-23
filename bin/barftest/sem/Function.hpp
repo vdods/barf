@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include "core.hpp"
-#include "sem/FunctionType.hpp"
-#include "sem/Value.hpp"
-#include "sem/Vector.hpp"
+#include "barftest/core.hpp"
+#include "barftest/sem/FunctionType.hpp"
+#include "barftest/sem/Value.hpp"
+#include "barftest/sem/Vector.hpp"
 
 namespace llvm {
 
@@ -14,7 +14,7 @@ class PointerType;
 
 } // end namespace llvm
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 struct FunctionPrototype;
@@ -53,4 +53,4 @@ nnup<Function> make_function (Args_&&... args)
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

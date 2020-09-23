@@ -2,11 +2,11 @@
 
 #pragma once
 
-#include "core.hpp"
-#include "sem/Base.hpp"
+#include "barftest/core.hpp"
+#include "barftest/sem/Base.hpp"
 #include <string>
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 // TODO: This should inherit from ValueLiteralBase once that exists
@@ -38,4 +38,4 @@ nnup<StringLiteral> make_string_literal (Args_&&... args)
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

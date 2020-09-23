@@ -2,12 +2,12 @@
 
 #pragma once
 
-#include "core.hpp"
-#include "Exception.hpp"
-#include "FiRange.hpp"
-#include "sem/Determinability.hpp"
-#include "sem/ExpressionKind.hpp"
-#include "sem/TypeEnum.hpp"
+#include "barftest/core.hpp"
+#include "barftest/Exception.hpp"
+#include "barftest/FiRange.hpp"
+#include "barftest/sem/Determinability.hpp"
+#include "barftest/sem/ExpressionKind.hpp"
+#include "barftest/sem/TypeEnum.hpp"
 #include <ostream>
 #include <string>
 
@@ -20,7 +20,7 @@ class Value;
 
 } // end namespace llvm
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 struct SymbolSpecifier;
@@ -210,7 +210,7 @@ inline Log &operator << (Log &out, Base const &b)
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest
 
 // For the above operator<< function to work, the following needs a definition with value = true.
-template <> struct lvd::HasCustomLogOutputOverload<cbz::sem::Base> : std::true_type { };
+template <> struct lvd::HasCustomLogOutputOverload<barftest::sem::Base> : std::true_type { };

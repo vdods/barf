@@ -1,10 +1,10 @@
 // 2019.06.06 - Victor Dods
 
-#include "sem/Vector.hpp"
+#include "barftest/sem/Vector.hpp"
 
-#include "sem/TypeArray.hpp"
+#include "barftest/sem/TypeArray.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 Tuple *Tuple::cloned () const
@@ -120,4 +120,4 @@ TypeBase const &TypeTuple::uniform_element_type () const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

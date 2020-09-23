@@ -2,11 +2,11 @@
 
 #pragma once
 
-#include "core.hpp"
-#include "sem/Base.hpp"
-#include "sem/Vector.hpp"
+#include "barftest/core.hpp"
+#include "barftest/sem/Base.hpp"
+#include "barftest/sem/Vector.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 struct TypeArray : public TypeAggregate
@@ -42,4 +42,4 @@ nnup<TypeArray> make_type_array (Args_&&... args)
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

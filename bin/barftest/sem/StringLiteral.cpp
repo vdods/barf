@@ -1,11 +1,11 @@
 // 2019.11.12 - Victor Dods
 
-#include "sem/StringLiteral.hpp"
+#include "barftest/sem/StringLiteral.hpp"
 
-#include "literal.hpp"
-#include "sem/TypeArray.hpp"
+#include "barftest/literal.hpp"
+#include "barftest/sem/TypeArray.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 bool StringLiteral::equals (Base const &other_) const
@@ -28,4 +28,4 @@ void StringLiteral::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

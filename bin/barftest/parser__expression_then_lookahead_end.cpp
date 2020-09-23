@@ -1,14 +1,14 @@
 // 2016.08.14 - Victor Dods
 
-#include "sem/BinaryOperation.hpp"
-#include "sem/ErrorDummy.hpp"
-#include "sem/Identifier.hpp"
-#include "sem/UnaryOperation.hpp"
-#include "sem/Value.hpp"
+#include "barftest/sem/BinaryOperation.hpp"
+#include "barftest/sem/ErrorDummy.hpp"
+#include "barftest/sem/Identifier.hpp"
+#include "barftest/sem/UnaryOperation.hpp"
+#include "barftest/sem/Value.hpp"
 #include <lvd/test.hpp>
 #include "UnitTestParser.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace text {
 
 LVD_TEST_BEGIN(00__parser__01__expression_then_lookahead_end__000)
@@ -96,4 +96,4 @@ LVD_TEST_BEGIN(00__parser__01__expression_then_lookahead_end__005)
 LVD_TEST_END
 
 } // end namespace text
-} // end namespace cbz
+} // end namespace barftest

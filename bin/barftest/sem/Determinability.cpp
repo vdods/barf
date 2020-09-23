@@ -1,10 +1,10 @@
 // 2019.11.15 - Victor Dods
 
-#include "sem/Determinability.hpp"
+#include "barftest/sem/Determinability.hpp"
 
-#include "Exception.hpp"
+#include "barftest/Exception.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 std::string const &as_string (DeterminabilityContextual determinability_contextual)
@@ -22,4 +22,4 @@ std::string const &as_string (DeterminabilityContextual determinability_contextu
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

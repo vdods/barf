@@ -1,10 +1,10 @@
 // 2020.05.26 - Victor Dods
 
-#include "sem/GlobalValueLinkage.hpp"
+#include "barftest/sem/GlobalValueLinkage.hpp"
 
-#include "Exception.hpp"
+#include "barftest/Exception.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 std::string const &as_string (GlobalValueLinkageContextual global_value_linkage_contextual)
@@ -40,4 +40,4 @@ std::string const &as_string_lowercase (GlobalValueLinkageContextual global_valu
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

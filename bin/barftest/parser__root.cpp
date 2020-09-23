@@ -1,20 +1,20 @@
 // 2016.08.14 - Victor Dods
 
-#include "sem/Declaration.hpp"
-#include "sem/Definition.hpp"
-#include "sem/Identifier.hpp"
-#include "sem/Initialization.hpp"
-#include "sem/PointerType.hpp"
-#include "sem/ReferenceType.hpp"
-#include "sem/SymbolSpecifier.hpp"
-#include "sem/TypeIdentifier.hpp"
-#include "sem/UnaryOperation.hpp"
-#include "sem/Value.hpp"
-#include "sem/Vector.hpp"
+#include "barftest/sem/Declaration.hpp"
+#include "barftest/sem/Definition.hpp"
+#include "barftest/sem/Identifier.hpp"
+#include "barftest/sem/Initialization.hpp"
+#include "barftest/sem/PointerType.hpp"
+#include "barftest/sem/ReferenceType.hpp"
+#include "barftest/sem/SymbolSpecifier.hpp"
+#include "barftest/sem/TypeIdentifier.hpp"
+#include "barftest/sem/UnaryOperation.hpp"
+#include "barftest/sem/Value.hpp"
+#include "barftest/sem/Vector.hpp"
 #include <lvd/test.hpp>
 #include "UnitTestParser.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace text {
 
 LVD_TEST_BEGIN(00__parser__12__root__000)
@@ -221,7 +221,7 @@ square_Float64   ::=\n\
     }\n\
 y : Float64\n\
 __init__ ::= () -> Sint64 {\n\
-    if TRUE then { // Using this to start the block causes: cbz: ../cbz/text/Parser.cpp:5051: text::Parser::ParseTreeNode_* text::Parser::TakeHypotheticalActionOnHPS_(const text::Parser::ParseTreeNode_&, text::Parser::ParseTreeNode_::Type, uint32_t): Assertion <>existing_reduce_action_node->m_child_nodes.begin()->second.size() == 1' failed.\n\
+    if TRUE then { // Using this to start the block causes: barftest: ../barftest/text/Parser.cpp:5051: text::Parser::ParseTreeNode_* text::Parser::TakeHypotheticalActionOnHPS_(const text::Parser::ParseTreeNode_&, text::Parser::ParseTreeNode_::Type, uint32_t): Assertion <>existing_reduce_action_node->m_child_nodes.begin()->second.size() == 1' failed.\n\
         y = square_Float64(10.0)\n\
     }\n\
     return 0\n\
@@ -234,4 +234,4 @@ LVD_TEST_END
 #endif
 
 } // end namespace text
-} // end namespace cbz
+} // end namespace barftest

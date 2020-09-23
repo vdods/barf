@@ -1,11 +1,11 @@
 // 2016.08.09 - Victor Dods
 
-#include "sem/FunctionType.hpp"
+#include "barftest/sem/FunctionType.hpp"
 
-#include "Exception.hpp"
-#include "sem/Identifier.hpp"
+#include "barftest/Exception.hpp"
+#include "barftest/sem/Identifier.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 bool FunctionType::equals (Base const &other_) const
@@ -34,4 +34,4 @@ void FunctionType::validate_parameter_count (ParameterList const &parameter_list
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

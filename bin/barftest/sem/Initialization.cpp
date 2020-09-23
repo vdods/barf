@@ -1,12 +1,12 @@
 // 2016.08.09 - Victor Dods
 
-#include "sem/Initialization.hpp"
+#include "barftest/sem/Initialization.hpp"
 
-#include "Exception.hpp"
-#include "sem/Identifier.hpp"
-#include "sem/Type.hpp"
+#include "barftest/Exception.hpp"
+#include "barftest/sem/Identifier.hpp"
+#include "barftest/sem/Type.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 Initialization::Initialization (FiRange const &firange, nnup<Identifier> &&id, nnup<Base> &&content)
@@ -35,4 +35,4 @@ void Initialization::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

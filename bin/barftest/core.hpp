@@ -9,7 +9,7 @@
 #include <ostream>
 #include <sstream>
 
-namespace cbz {
+namespace barftest {
 
 // Aliases for common pointer types and function.
 using lvd::nn;          // gsl::not_null<...>
@@ -17,7 +17,7 @@ using lvd::up;          // std::unique_ptr<...>
 using lvd::nnup;        // gsl::not_null<std::unique_ptr<...>>
 using lvd::make_nnup;
 
-} // end namespace cbz
+} // end namespace barftest
 
 namespace std {
 

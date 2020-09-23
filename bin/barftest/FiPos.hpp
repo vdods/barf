@@ -4,8 +4,8 @@
 
 #include <lvd/FiPos.hpp>
 
-namespace cbz {
+namespace barftest {
 
 using lvd::FiPos;
 
-} // end namespace cbz
+} // end namespace barftest

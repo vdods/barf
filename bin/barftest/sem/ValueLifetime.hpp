@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "core.hpp"
+#include "barftest/core.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 enum class ValueLifetimeContextual : uint8_t
@@ -47,4 +47,4 @@ inline std::ostream &operator << (std::ostream &out, ValueLifetime value_lifetim
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

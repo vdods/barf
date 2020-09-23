@@ -1,10 +1,10 @@
 // 2019.11.15 - Victor Dods
 
-#include "sem/ValueKind.hpp"
+#include "barftest/sem/ValueKind.hpp"
 
-#include "Exception.hpp"
+#include "barftest/Exception.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 std::string const &as_string (ValueKindContextual value_kind_contextual)
@@ -36,4 +36,4 @@ std::string const &as_string_lowercase (ValueKindContextual value_kind_contextua
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

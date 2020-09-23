@@ -1,14 +1,14 @@
 // 2016.08.09 - Victor Dods
 
-#include "sem/Declaration.hpp"
+#include "barftest/sem/Declaration.hpp"
 
-#include "Exception.hpp"
-#include "sem/FunctionPrototype.hpp"
-#include "sem/Identifier.hpp"
-#include "sem/SymbolSpecifier.hpp"
-#include "sem/Type.hpp"
+#include "barftest/Exception.hpp"
+#include "barftest/sem/FunctionPrototype.hpp"
+#include "barftest/sem/Identifier.hpp"
+#include "barftest/sem/SymbolSpecifier.hpp"
+#include "barftest/sem/Type.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 Declaration::Declaration (nnup<SymbolSpecifier> &&symbol_specifier, nnup<TypeBaseOrTypeKeyword> &&content)
@@ -47,4 +47,4 @@ void Declaration::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

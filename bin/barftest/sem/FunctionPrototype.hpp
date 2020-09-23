@@ -2,11 +2,11 @@
 
 #pragma once
 
-#include "core.hpp"
-#include "sem/Type.hpp"
-#include "sem/Vector.hpp"
+#include "barftest/core.hpp"
+#include "barftest/sem/Type.hpp"
+#include "barftest/sem/Vector.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 struct FunctionType;
@@ -44,4 +44,4 @@ nnup<FunctionPrototype> make_function_prototype (Args_&&... args)
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

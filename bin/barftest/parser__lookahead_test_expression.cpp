@@ -1,11 +1,11 @@
 // 2016.08.14 - Victor Dods
 
-#include "sem/BinaryOperation.hpp"
-#include "sem/Identifier.hpp"
+#include "barftest/sem/BinaryOperation.hpp"
+#include "barftest/sem/Identifier.hpp"
 #include <lvd/test.hpp>
 #include "UnitTestParser.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace text {
 
 //
@@ -329,4 +329,4 @@ LVD_TEST_BEGIN(00__parser__03__lookahead_test_expression__015)
 LVD_TEST_END
 
 } // end namespace text
-} // end namespace cbz
+} // end namespace barftest

@@ -1,8 +1,8 @@
 // 2019.06.30 - Victor Dods
 
-#include "sem/Type.hpp"
+#include "barftest/sem/Type.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 TypeKeyword *TypeKeyword::cloned () const { return new TypeKeyword(firange()); }
@@ -40,4 +40,4 @@ template <> void Float64::print (Log &out) const { out << "Float64(" << firange(
 template <> void TypeDummy::print (Log &out) const { out << "TypeDummy(" << firange() << ')'; }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

@@ -1,12 +1,12 @@
 // 2019.06.06 - Victor Dods
 
-#include "sem/ElementAccess.hpp"
+#include "barftest/sem/ElementAccess.hpp"
 
-#include "Exception.hpp"
-#include "sem/ReferenceType.hpp"
-#include "sem/SymbolSpecifier.hpp"
+#include "barftest/Exception.hpp"
+#include "barftest/sem/ReferenceType.hpp"
+#include "barftest/sem/SymbolSpecifier.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 bool ElementAccess::equals (Base const &other_) const
@@ -29,4 +29,4 @@ void ElementAccess::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

@@ -1,10 +1,10 @@
 // 2016.08.10 - Victor Dods
 
-#include "sem/Break.hpp"
+#include "barftest/sem/Break.hpp"
 
 #include <exception>
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 Break *Break::cloned () const
@@ -18,4 +18,4 @@ void Break::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

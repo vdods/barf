@@ -1,14 +1,14 @@
 // 2019.04.25 - Victor Dods
 
-#include "sem/FunctionPrototype.hpp"
+#include "barftest/sem/FunctionPrototype.hpp"
 
-#include "Exception.hpp"
-#include "sem/FunctionType.hpp"
-#include "sem/Identifier.hpp"
-#include "sem/SymbolSpecifier.hpp"
-#include "sem/ValueLifetime.hpp"
+#include "barftest/Exception.hpp"
+#include "barftest/sem/FunctionType.hpp"
+#include "barftest/sem/Identifier.hpp"
+#include "barftest/sem/SymbolSpecifier.hpp"
+#include "barftest/sem/ValueLifetime.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 FunctionPrototype::FunctionPrototype (FiRange const &firange, nnup<DeclarationTuple> &&domain_variable_declaration_tuple, nnup<TypeBase> &&codomain)
@@ -63,4 +63,4 @@ nnup<FunctionType> FunctionPrototype::extract_function_type (FiRange const &fira
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

@@ -2,17 +2,17 @@
 
 #pragma once
 
-#include "core.hpp"
-#include "Exception.hpp"
-#include "sem/Base.hpp"
-#include "sem/Declaration.hpp"
-#include "sem/Identifier.hpp"
-#include "sem/Type.hpp"
-#include "sem/Value.hpp"
+#include "barftest/core.hpp"
+#include "barftest/Exception.hpp"
+#include "barftest/sem/Base.hpp"
+#include "barftest/sem/Declaration.hpp"
+#include "barftest/sem/Identifier.hpp"
+#include "barftest/sem/Type.hpp"
+#include "barftest/sem/Value.hpp"
 #include <type_traits>
 #include <vector>
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 // TODO: Make VectorBase ?
@@ -215,4 +215,4 @@ nnup<TypeTuple> make_type_tuple (Args_&&... args)
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include "core.hpp"
-#include "sem/Base.hpp"
+#include "barftest/core.hpp"
+#include "barftest/sem/Base.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 enum class LLVMCastInstruction : uint8_t
@@ -106,4 +106,4 @@ nnup<LLVMCast> make_llvm_cast (Args_&&... args)
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

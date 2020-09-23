@@ -1,10 +1,10 @@
 // 2016.08.08 - Victor Dods
 
-#include "sem/Conditional.hpp"
+#include "barftest/sem/Conditional.hpp"
 
-#include "Exception.hpp"
+#include "barftest/Exception.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 Conditional::Conditional (nnup<Base> &&condition, nnup<Base> &&positive_element, up<Base> &&negative_element)
@@ -70,4 +70,4 @@ void ConditionalStatement::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

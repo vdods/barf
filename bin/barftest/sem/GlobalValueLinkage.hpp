@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "core.hpp"
+#include "barftest/core.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 // GlobalValueLinkages are only for global symbols.
@@ -61,4 +61,4 @@ GlobalValueLinkage global_value_linkage_determined (GlobalValueLinkageContextual
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

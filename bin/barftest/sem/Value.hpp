@@ -2,12 +2,12 @@
 
 #pragma once
 
-#include "core.hpp"
-#include "sem/Base.hpp"
-#include "sem/Type.hpp"
+#include "barftest/core.hpp"
+#include "barftest/sem/Base.hpp"
+#include "barftest/sem/Type.hpp"
 #include <cstdint>
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 // TODO: Rename this to ValueLiteralBase
@@ -217,4 +217,4 @@ inline double string_to_double (std::string const &s)
     return std::stod(s);
 }
 
-} // end namespace cbz
+} // end namespace barftest

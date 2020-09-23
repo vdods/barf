@@ -1,13 +1,13 @@
 // 2016.08.08 - Victor Dods
 
-#include "sem/Identifier.hpp"
+#include "barftest/sem/Identifier.hpp"
 
-#include "Exception.hpp"
-#include "literal.hpp"
-#include "sem/ReferenceType.hpp"
-#include "sem/SymbolSpecifier.hpp"
+#include "barftest/Exception.hpp"
+#include "barftest/literal.hpp"
+#include "barftest/sem/ReferenceType.hpp"
+#include "barftest/sem/SymbolSpecifier.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 Identifier::Identifier (FiRange const &firange, std::string const &text)
@@ -35,4 +35,4 @@ void Identifier::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

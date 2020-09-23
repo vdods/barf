@@ -1,12 +1,12 @@
 // 2016.08.14 - Victor Dods
 
-#include "sem/PointerType.hpp"
-#include "sem/TypeArray.hpp"
-#include "sem/Value.hpp"
+#include "barftest/sem/PointerType.hpp"
+#include "barftest/sem/TypeArray.hpp"
+#include "barftest/sem/Value.hpp"
 #include <lvd/test.hpp>
 #include "UnitTestParser.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace text {
 
 LVD_TEST_BEGIN(00__parser__04__type_expression__000)
@@ -94,4 +94,4 @@ LVD_TEST_BEGIN(00__parser__04__type_expression__006)
 LVD_TEST_END
 
 } // end namespace text
-} // end namespace cbz
+} // end namespace barftest

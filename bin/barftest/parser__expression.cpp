@@ -1,25 +1,25 @@
 // 2016.08.14 - Victor Dods
 
-#include "sem/BinaryOperation.hpp"
-#include "sem/ElementAccess.hpp"
-#include "sem/ErrorDummy.hpp"
-#include "sem/Function.hpp"
-#include "sem/FunctionEvaluation.hpp"
-#include "sem/FunctionPrototype.hpp"
-#include "sem/Identifier.hpp"
-#include "sem/LLVMCast.hpp"
-#include "sem/NullPtr.hpp"
-#include "sem/PointerType.hpp"
-#include "sem/Return.hpp"
-#include "sem/StringLiteral.hpp"
-#include "sem/SymbolSpecifier.hpp"
-#include "sem/UnaryOperation.hpp"
-#include "sem/Value.hpp"
-#include "sem/Vector.hpp"
+#include "barftest/sem/BinaryOperation.hpp"
+#include "barftest/sem/ElementAccess.hpp"
+#include "barftest/sem/ErrorDummy.hpp"
+#include "barftest/sem/Function.hpp"
+#include "barftest/sem/FunctionEvaluation.hpp"
+#include "barftest/sem/FunctionPrototype.hpp"
+#include "barftest/sem/Identifier.hpp"
+#include "barftest/sem/LLVMCast.hpp"
+#include "barftest/sem/NullPtr.hpp"
+#include "barftest/sem/PointerType.hpp"
+#include "barftest/sem/Return.hpp"
+#include "barftest/sem/StringLiteral.hpp"
+#include "barftest/sem/SymbolSpecifier.hpp"
+#include "barftest/sem/UnaryOperation.hpp"
+#include "barftest/sem/Value.hpp"
+#include "barftest/sem/Vector.hpp"
 #include <lvd/test.hpp>
 #include "UnitTestParser.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace text {
 
 LVD_TEST_BEGIN(00__parser__00__expression__000)
@@ -710,4 +710,4 @@ LVD_TEST_BEGIN(00__parser__00__expression__046)
 LVD_TEST_END
 
 } // end namespace text
-} // end namespace cbz
+} // end namespace barftest

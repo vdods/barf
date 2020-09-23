@@ -19,15 +19,15 @@
 
 #line 15 "../bin/barftest/text/Parser.trison"
 
-#include "core.hpp"
-#include "FiLoc.hpp"
-#include "FiPos.hpp"
-#include "FiRange.hpp"
+#include "barftest/core.hpp"
+#include "barftest/FiLoc.hpp"
+#include "barftest/FiPos.hpp"
+#include "barftest/FiRange.hpp"
+#include "barftest/sem/Dummy.hpp"
 #include <lvd/Log.hpp>
 #include <memory>
-#include "sem/Dummy.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace text {
 
 class Scanner;
@@ -1103,6 +1103,6 @@ std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 #line 67 "../bin/barftest/text/Parser.trison"
 
 } // end namespace text
-} // end namespace cbz
+} // end namespace barftest
 
 #line 1109 "../bin/barftest/text/Parser.hpp"

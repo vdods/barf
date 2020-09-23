@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include "core.hpp"
-#include "sem/Type.hpp"
+#include "barftest/core.hpp"
+#include "barftest/sem/Type.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 struct ReferenceType : public TypeBase
@@ -32,4 +32,4 @@ nnup<ReferenceType> make_reference_type (Args_&&... args)
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

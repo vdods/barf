@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include "core.hpp"
-#include "sem/Base.hpp"
+#include "barftest/core.hpp"
+#include "barftest/sem/Base.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 struct Dummy : public Base
@@ -26,4 +26,4 @@ nnup<Dummy> make_dummy (Args_&&... args)
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

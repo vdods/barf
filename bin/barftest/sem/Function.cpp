@@ -1,14 +1,14 @@
 // 2016.08.09 - Victor Dods
 
-#include "sem/Function.hpp"
+#include "barftest/sem/Function.hpp"
 
-#include "Exception.hpp"
+#include "barftest/Exception.hpp"
 #include <iostream> // TEMP
-#include "sem/FunctionPrototype.hpp"
-#include "sem/SymbolSpecifier.hpp"
-#include "sem/ValueLifetime.hpp"
+#include "barftest/sem/FunctionPrototype.hpp"
+#include "barftest/sem/SymbolSpecifier.hpp"
+#include "barftest/sem/ValueLifetime.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 Function::Function (nnup<FunctionPrototype> &&function_prototype, up<StatementList> &&body)
@@ -42,4 +42,4 @@ void Function::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

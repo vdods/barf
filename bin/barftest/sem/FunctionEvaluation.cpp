@@ -1,13 +1,13 @@
 // 2016.08.09 - Victor Dods
 
-#include "sem/FunctionEvaluation.hpp"
+#include "barftest/sem/FunctionEvaluation.hpp"
 
-#include "Exception.hpp"
-#include "sem/Function.hpp"
-#include "sem/FunctionPrototype.hpp"
-#include "sem/FunctionType.hpp"
+#include "barftest/Exception.hpp"
+#include "barftest/sem/Function.hpp"
+#include "barftest/sem/FunctionPrototype.hpp"
+#include "barftest/sem/FunctionType.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 bool FunctionEvaluation::equals (Base const &other_) const
@@ -31,4 +31,4 @@ void FunctionEvaluation::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

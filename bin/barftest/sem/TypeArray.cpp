@@ -1,8 +1,8 @@
 // 2019.11.06 - Victor Dods
 
-#include "sem/TypeArray.hpp"
+#include "barftest/sem/TypeArray.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 TypeArray::TypeArray (FiRange const &firange, nnup<TypeBase> &&element_type, uint64_t element_count)
@@ -31,4 +31,4 @@ void TypeArray::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

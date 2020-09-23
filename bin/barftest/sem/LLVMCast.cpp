@@ -1,10 +1,10 @@
 // 2020.07.07 - Victor Dods
 
-#include "sem/LLVMCast.hpp"
+#include "barftest/sem/LLVMCast.hpp"
 
-#include "sem/Type.hpp"
+#include "barftest/sem/Type.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 static std::string const LLVM_CAST_INSTRUCTION_STRING_TABLE[uint32_t(LLVMCastInstruction::__HIGHEST__) - uint32_t(LLVMCastInstruction::__LOWEST__) + 1] = {
@@ -95,4 +95,4 @@ void LLVMCast::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

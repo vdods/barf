@@ -1,12 +1,12 @@
 // 2016.08.14 - Victor Dods
 
-#include "sem/Value.hpp"
+#include "barftest/sem/Value.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 // nnup<BooleanValue> const TRUE = sem::make_boolean_value(FiRange::INVALID, true);
 // nnup<BooleanValue> const FALSE = sem::make_boolean_value(FiRange::INVALID, false);
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

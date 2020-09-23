@@ -1,8 +1,8 @@
 // 2020.06.03 - Victor Dods
 
-#include "sem/PointerType.hpp"
+#include "barftest/sem/PointerType.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 bool PointerType::equals (Base const &other_) const
@@ -25,4 +25,4 @@ void PointerType::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

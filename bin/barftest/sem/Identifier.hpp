@@ -2,11 +2,11 @@
 
 #pragma once
 
-#include "core.hpp"
-#include "sem/Base.hpp"
+#include "barftest/core.hpp"
+#include "barftest/sem/Base.hpp"
 #include <string>
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 // TODO: This should really be named SymbolicRef (though this would imply a separation between
@@ -36,4 +36,4 @@ nnup<Identifier> make_identifier (Args_&&... args)
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

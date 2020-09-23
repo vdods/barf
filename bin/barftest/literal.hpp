@@ -4,7 +4,7 @@
 
 #include <lvd/literal.hpp>
 
-namespace cbz {
+namespace barftest {
 
 using lvd::literal_of;
 
@@ -22,4 +22,4 @@ using lvd::hex_char;
 using lvd::hex_char_literal;
 using lvd::string_literal_of;
 
-} // end namespace cbz
+} // end namespace barftest

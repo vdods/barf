@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "core.hpp"
+#include "barftest/core.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 enum class ValueKindContextual : uint8_t
@@ -46,4 +46,4 @@ inline std::ostream &operator << (std::ostream &out, ValueKind value_kind)
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

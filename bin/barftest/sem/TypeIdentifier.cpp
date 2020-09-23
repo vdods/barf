@@ -1,10 +1,10 @@
 // 2016.09.18 - Victor Dods
 
-#include "sem/TypeIdentifier.hpp"
+#include "barftest/sem/TypeIdentifier.hpp"
 
-#include "sem/Identifier.hpp"
+#include "barftest/sem/Identifier.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 bool TypeIdentifier::equals (Base const &other_) const
@@ -27,4 +27,4 @@ void TypeIdentifier::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

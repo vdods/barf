@@ -12,18 +12,18 @@
 
 #line 65 "../bin/barftest/text/Scanner.reflex"
 
-#include "literal.hpp"
-#include "sem/Break.hpp"
-#include "sem/Dummy.hpp"
-#include "sem/ErrorDummy.hpp"
-#include "sem/Identifier.hpp"
-#include "sem/LLVMCast.hpp"
-#include "sem/Return.hpp"
-#include "sem/Specifier.hpp"
-#include "sem/Type.hpp"
-#include "sem/Value.hpp"
+#include "barftest/literal.hpp"
+#include "barftest/sem/Break.hpp"
+#include "barftest/sem/Dummy.hpp"
+#include "barftest/sem/ErrorDummy.hpp"
+#include "barftest/sem/Identifier.hpp"
+#include "barftest/sem/LLVMCast.hpp"
+#include "barftest/sem/Return.hpp"
+#include "barftest/sem/Specifier.hpp"
+#include "barftest/sem/Type.hpp"
+#include "barftest/sem/Value.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace text {
 
 bool Scanner::open_file (std::string const &input_filename)
@@ -26365,6 +26365,6 @@ std::uint32_t const Scanner::ms_accept_handler_count_ = sizeof(Scanner::ms_accep
 #line 154 "../bin/barftest/text/Scanner.reflex"
 
 } // end namespace text
-} // end namespace cbz
+} // end namespace barftest
 
 #line 26371 "../bin/barftest/text/Scanner.cpp"

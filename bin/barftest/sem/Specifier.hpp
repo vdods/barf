@@ -2,14 +2,14 @@
 
 #pragma once
 
-#include "core.hpp"
-#include "sem/Base.hpp"
-#include "sem/Determinability.hpp"
-#include "sem/GlobalValueLinkage.hpp"
-#include "sem/ValueKind.hpp"
-#include "sem/ValueLifetime.hpp"
+#include "barftest/core.hpp"
+#include "barftest/sem/Base.hpp"
+#include "barftest/sem/Determinability.hpp"
+#include "barftest/sem/GlobalValueLinkage.hpp"
+#include "barftest/sem/ValueKind.hpp"
+#include "barftest/sem/ValueLifetime.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 struct SpecifierBase : public Base
@@ -70,4 +70,4 @@ nnup<GlobalValueLinkageSpecifier> make_global_value_linkage_specifier (Args_&&..
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

@@ -1,14 +1,14 @@
 // 2016.08.09 - Victor Dods
 
-#include "sem/Definition.hpp"
+#include "barftest/sem/Definition.hpp"
 
-#include "Exception.hpp"
-#include "sem/Identifier.hpp"
-#include "sem/SymbolSpecifier.hpp"
-#include "sem/Type.hpp"
-#include "sem/Value.hpp"
+#include "barftest/Exception.hpp"
+#include "barftest/sem/Identifier.hpp"
+#include "barftest/sem/SymbolSpecifier.hpp"
+#include "barftest/sem/Type.hpp"
+#include "barftest/sem/Value.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 Definition::Definition (FiRange const &firange, nnup<SymbolSpecifier> &&symbol_specifier, nnup<Base> &&content)
@@ -44,4 +44,4 @@ void Definition::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

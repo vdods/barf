@@ -2,15 +2,15 @@
 
 #include "UnitTestParser.hpp"
 
-#include "literal.hpp"
+#include "barftest/literal.hpp"
 #include <lvd/req.hpp>
 #include <lvd/test.hpp>
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
-// This is just used to allow LVD_TEST_REQ_EQ to be able to test cbz::sem::Base equality via operator==
-bool operator == (Base const &lhs, Base const &rhs) { return cbz::sem::are_equal(lhs, rhs); }
+// This is just used to allow LVD_TEST_REQ_EQ to be able to test barftest::sem::Base equality via operator==
+bool operator == (Base const &lhs, Base const &rhs) { return barftest::sem::are_equal(lhs, rhs); }
 
 } // end namespace sem
 
@@ -119,4 +119,4 @@ LVD_TEST_BEGIN(00__parser__99__summary)
 LVD_TEST_END
 
 } // end namespace text
-} // end namespace cbz
+} // end namespace barftest

@@ -1,10 +1,10 @@
 // 2016.08.09 - Victor Dods
 
-#include "sem/BinaryOperation.hpp"
+#include "barftest/sem/BinaryOperation.hpp"
 
-#include "Exception.hpp"
+#include "barftest/Exception.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 std::string const &as_string (BinaryOperationType bin_op_type)
@@ -96,4 +96,4 @@ void BinaryOperation::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include "core.hpp"
-#include "sem/Base.hpp"
+#include "barftest/core.hpp"
+#include "barftest/sem/Base.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 struct SymbolSpecifier;
@@ -37,4 +37,4 @@ nnup<Definition> make_definition (Args_&&... args)
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

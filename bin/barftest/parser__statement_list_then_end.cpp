@@ -1,12 +1,12 @@
 // 2016.08.14 - Victor Dods
 
-#include "sem/FunctionEvaluation.hpp"
-#include "sem/Identifier.hpp"
-#include "sem/Vector.hpp"
+#include "barftest/sem/FunctionEvaluation.hpp"
+#include "barftest/sem/Identifier.hpp"
+#include "barftest/sem/Vector.hpp"
 #include <lvd/test.hpp>
 #include "UnitTestParser.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace text {
 
 LVD_TEST_BEGIN(00__parser__10__statement_list_then_end__000)
@@ -23,4 +23,4 @@ LVD_TEST_BEGIN(00__parser__10__statement_list_then_end__000)
 LVD_TEST_END
 
 } // end namespace text
-} // end namespace cbz
+} // end namespace barftest

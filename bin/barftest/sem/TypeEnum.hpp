@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include "core.hpp"
+#include "barftest/core.hpp"
 #include <cstdint>
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 enum class TypeEnum : uint8_t
@@ -88,4 +88,4 @@ inline std::ostream &operator << (std::ostream &out, TypeEnum type_enum)
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

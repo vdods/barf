@@ -1,13 +1,13 @@
 // 2016.08.09 - Victor Dods
 
-#include "sem/UnaryOperation.hpp"
+#include "barftest/sem/UnaryOperation.hpp"
 
-#include "Exception.hpp"
-#include "sem/PointerType.hpp"
-#include "sem/ReferenceType.hpp"
-#include "sem/SymbolSpecifier.hpp"
+#include "barftest/Exception.hpp"
+#include "barftest/sem/PointerType.hpp"
+#include "barftest/sem/ReferenceType.hpp"
+#include "barftest/sem/SymbolSpecifier.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 std::string const &as_string (UnaryOperationType un_op_type)
@@ -49,4 +49,4 @@ void UnaryOperation::print (Log &out) const
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

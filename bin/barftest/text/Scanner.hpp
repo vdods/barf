@@ -537,17 +537,17 @@ private:
 
 #line 12 "../bin/barftest/text/Scanner.reflex"
 
-#include "core.hpp"
-#include "FiRange.hpp"
-#include "InputBase.hpp"
-#include "sem/StringLiteral.hpp"
-#include "sem/Value.hpp"
-#include "text/Parser.hpp"
+#include "barftest/core.hpp"
+#include "barftest/FiRange.hpp"
+#include "barftest/InputBase.hpp"
+#include "barftest/sem/StringLiteral.hpp"
+#include "barftest/sem/Value.hpp"
+#include "barftest/text/Parser.hpp"
 #include <functional>
 #include <fstream>
 #include <sstream>
 
-namespace cbz {
+namespace barftest {
 namespace text {
 
 #line 554 "../bin/barftest/text/Scanner.hpp"
@@ -689,6 +689,6 @@ private:
 #line 56 "../bin/barftest/text/Scanner.reflex"
 
 } // end namespace text
-} // end namespace cbz
+} // end namespace barftest
 
 #line 695 "../bin/barftest/text/Scanner.hpp"

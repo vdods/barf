@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "core.hpp"
-#include "sem/Base.hpp"
+#include "barftest/core.hpp"
+#include "barftest/sem/Base.hpp"
 
 namespace llvm {
 
@@ -11,7 +11,7 @@ class Type;
 
 } // end namespace llvm
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 // Used for declarations.
@@ -169,4 +169,4 @@ nnup<TypeDummy> make_type_dummy (Args_&&... args)
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

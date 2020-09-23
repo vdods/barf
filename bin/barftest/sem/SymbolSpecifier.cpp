@@ -1,11 +1,11 @@
 // 2019.11.20 - Victor Dods
 
-#include "sem/SymbolSpecifier.hpp"
+#include "barftest/sem/SymbolSpecifier.hpp"
 
-#include "Exception.hpp"
-#include "literal.hpp"
+#include "barftest/Exception.hpp"
+#include "barftest/literal.hpp"
 
-namespace cbz {
+namespace barftest {
 namespace sem {
 
 // This is declared here so that the definition of Identifier is complete..
@@ -105,4 +105,4 @@ nnup<SymbolSpecifier> SymbolSpecifier::with_specified_global_value_linkage (Glob
 }
 
 } // end namespace sem
-} // end namespace cbz
+} // end namespace barftest

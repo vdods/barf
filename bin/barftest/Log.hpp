@@ -5,9 +5,9 @@
 #include <lvd/g_log.hpp>
 #include <lvd/Log.hpp>
 
-namespace cbz {
+namespace barftest {
 
-// This is to avoid having to qualify the symbol all the time, and to place it within the cbz
+// This is to avoid having to qualify the symbol all the time, and to place it within the barftest
 // namespace once that actually exists.
 using lvd::Log;
 // Helper types
@@ -22,4 +22,4 @@ using lvd::Unindent;
 // Global Log object.
 using lvd::g_log;
 
-} // end namespace cbz
+} // end namespace barftest
