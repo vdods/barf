@@ -20,6 +20,8 @@ in particular, the major revision number certainly indicates backward-incompatib
 while the minor revision number usually indicates backward-compatible changes, there may be
 minor incompabilities.  The patch revision number indicates bugfixes and minor changes.
 
+-   `2.6.0` : Added `barftest` unit test suite.  Improvements to build system and documentation, including
+    verifying that `.deb` package creation works as expected.  Fixed a problem with the `metadev check` target.
 -   `2.5.0` : Added move semantics to the cpp trison target, allowing more efficient parser rule handling.
     Made a few other improvements, including requiring that the `rejection_action` directive is explicitly
     specified in reflex's cpp target, technically making this a backward incompatible change.

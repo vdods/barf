@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.18)
 project(barf)
 # NOTE: After cutting a release, you should increment the patch number and append `-DEV` so that
 # the deb packages produced while developing are distinguished from the actual tagged release.
-set(barf_VERSION 2.5.1-DEV)
+set(barf_VERSION 2.6.0)
 
 string(REPLACE "." ";" VERSION_LIST ${barf_VERSION})
 list(GET VERSION_LIST 0 barf_VERSION_MAJOR)
