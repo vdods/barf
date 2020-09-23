@@ -96,35 +96,6 @@ To run cmake in interactive mode:
 
 The `ccmake` tool is a curses interface for cmake which is easy to use.
 
-### Running Unit Tests
-
-If the BUILD_barftest option is enabled in cmake (done interactively in `ccmake` or specified
-via `-D BUILD_barftest=ON` option to `cmake`) then the `bin/barftest` binary will be built,
-and when run will execute a suite of unit tests, exercising a real scanner and parser that
-was taken from another of the author's projects.
-
-    bin/barftest
-
-Will silently succeed if no tests fail, otherwise will indicate failed tests.  A help message
-can be seen by supplying the `--help` option.  More detailed test output can be had by using
-the `--log-level=X` option, e.g.
-
-    bin/barftest --log-level=TRC
-
-will give very very verbose output.
-
-    bin/barftest --log-level=INF
-
-will give verbose output, essentially only showing which tests are being run, the results,
-and the summary of the overall run.
-
-A filter can be specified to run only a subset of tests, e.g.
-
-    bin/barftest /00/parser/09/func
-
-will run all tests whose path starts with `/00/parser/09/func`.  Note that the end of the
-filter string doesn't have to coincide with a `/` char.
-
 ## Using BARF in Another Project
 
 If `barf` has been properly installed, the files necessary for cmake's `find_package`
@@ -186,24 +157,83 @@ using it.  He created a scripting language called
 
 ## Development Notes
 
-### `dev` and `metadev` targets
+### Running Unit Tests
 
-To test changes to `reflex` and `trison`, a set of build targets have been created
-which run the built `reflex` and `trison` binaries on all the `.reflex` and `.trison`
-sources in BARF's own codebase, producing parser and scanner code (this is the content
-of the build dir subdir `dev`), compiles versions of those binaries using the scanner
-and parser code in `dev` (these are `dev_reflex` and `dev_trison`), and then uses those
-binaries on all the `.reflex` and `.trison` sources, producing parser and scanner code
-(this is the content of the build dir subdir `metadev`), so that the output of the `dev`
-and `metadev` stages can be compared and verified to be identical.
+If the BUILD_barftest option is enabled in cmake (done interactively in `ccmake` or specified
+via `-D BUILD_barftest=ON` option to `cmake`) then the `bin/barftest` binary will be built,
+and when run will execute a suite of unit tests, exercising a real scanner and parser that
+was taken from another of the author's projects.
 
-To run these checks, build the `metadev_check` target.  E.g.
+    bin/barftest
+
+Will silently succeed if no tests fail, otherwise will indicate failed tests.  A help message
+can be seen by supplying the `--help` option.  More detailed test output can be had by using
+the `--log-level=X` option, e.g.
+
+    bin/barftest --log-level=TRC
+
+will give very very verbose output.
+
+    bin/barftest --log-level=INF
+
+will give verbose output, essentially only showing which tests are being run, the results,
+and the summary of the overall run.
+
+A filter can be specified to run only a subset of tests, e.g.
+
+    bin/barftest /00/parser/09/func
+
+will run all tests whose path starts with `/00/parser/09/func`.  Note that the end of the
+filter string doesn't have to coincide with a `/` char.
+
+### Verifying Self-Hosting
+
+The scanners and parsers in `barf` are implementing using `barf` itself.  This self-hosting
+poses particular challenges to testing/verification when adding or changing features to `reflex`
+and `trison`.  There are some make targets that assist in testing/verification:
+-   `dev` targets : the normally-built binaries (`build/bin/reflex` and `build/bin/trison`) are
+    used to generate the scanners and parsers of barf itself.  These generated sources appear
+    under the `build/dev` directory under their respective subdirectories.
+-   `metadev` targets : derived versions of the `reflex` and `trison` binaries (`build/bin/dev_reflex`
+    and `build/bin/dev_trison`) are built using the sources produced by the `dev` targets, which
+    appear under the `build/metadev` directory under their respective subdirectories.
+
+The most basic check is
 
     make metadev_check
 
-Success is when the produced `dev` and `metadev` subdirs of the build dir are identical.
-This build target should work even from a fresh build dir, and will build `bpp`, `reflex`,
-`trison`, and `playground` in the process.
+which builds and compares the generated `dev` and `metadev` scanners and parsers to ensure that the
+built binaries produce consistent and stable output.  Success is when the produced `dev` and `metadev`
+subdirs of the build dir are identical.  This build target should work even from a fresh build dir,
+and will build `bpp`, `reflex`, `trison`, `dev_reflex`, and `dev_trison` in the process.
+
+There are individual targets for each checking particular `metadev` scanner or parser:
+-   `make diff_metadev_barf_commonlang_scanner`
+-   `make diff_metadev_barf_preprocessor_parser`
+-   `make diff_metadev_barf_preprocessor_scanner`
+-   `make diff_metadev_barf_regex_parser`
+-   `make diff_metadev_barf_targetspec_parser`
+-   `make diff_metadev_reflex_parser`
+-   `make diff_metadev_trison_parser`
+as well as targets for building the categories of `metadev` targets:
+-   `make diff_all_metadev_parsers`
+-   `make diff_all_metadev_scanners`
+as well as one that builds all `metadev` targets:
+-   `make diff_all_metadev_thingies`
+
+The `metadev` targets can be built without comparing using the respective `make metadev_*` and
+`make all_metadev_*` targets.
+
+The other check, which is more subtle and intended only for `barf` developers, and which is currently not
+functioning as intended (due to the presence of #line directives in the committed-to-repo scanner and
+parser sources but not in the `dev` targets), is
+
+    make diff_all_dev_thingies
+
+This compares the generated `dev` scanners and parsers with the respective committed-to-repo sources, so that
+the specific changes in generated scanner and parser due to development work can be exactly quantified, or
+verified to produce no difference.  As with all the many `metadev` make rules described above, there are
+analogous `dev` make rules.
 
 CMake probably handles the dependencies of these targets correctly, but if you want to
 make absolutely sure that fresh sources have been generated and targets built, then run
@@ -217,6 +247,10 @@ Some of these are super old and may no longer apply.
 
 ### Bugs
 
+-   `make diff_all_dev_thingies` is not functioning because of the presence of `#line` directives in the
+    committed-to-repo scanner and parser sources, and their absence in the `dev` targets.  This could
+    be resolved by making the `dev` targets also use `#line` directives (as this affects the use of newlines
+    in the generated sources), but applying a transformation to strip out these directives before `diff`ing.
 -   disallow empty reflex states
 -   reflex: an unterminated regex causes a hang (while reflex is parsing the *.reflex source file):
 

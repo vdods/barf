@@ -143,8 +143,8 @@ target_link_libraries(barf_commonlang_and_targetspec PUBLIC Strict barf_core bar
 
 # dev version of barf_commonlang_and_targetspec
 
-reflex_add_source_dev(${PROJECT_SOURCE_DIR}/lib/commonlang/barf_commonlang_scanner.reflex ${PROJECT_BINARY_DIR}/dev/lib/commonlang/generated dev_barf_commonlang_scanner)
-trison_add_source_dev(${PROJECT_SOURCE_DIR}/lib/targetspec/barf_targetspec_parser.trison ${PROJECT_BINARY_DIR}/dev/lib/targetspec/generated dev_barf_targetspec_parser)
+reflex_add_source_dev(${PROJECT_SOURCE_DIR}/lib/commonlang/barf_commonlang_scanner.reflex ${PROJECT_SOURCE_DIR}/lib/commonlang/generated ${PROJECT_BINARY_DIR}/dev/lib/commonlang/generated dev_barf_commonlang_scanner)
+trison_add_source_dev(${PROJECT_SOURCE_DIR}/lib/targetspec/barf_targetspec_parser.trison ${PROJECT_SOURCE_DIR}/lib/targetspec/generated ${PROJECT_BINARY_DIR}/dev/lib/targetspec/generated dev_barf_targetspec_parser)
 
 reflex_add_source_metadev(${PROJECT_SOURCE_DIR}/lib/commonlang/barf_commonlang_scanner.reflex ${PROJECT_BINARY_DIR}/metadev/lib/commonlang/generated metadev_barf_commonlang_scanner dev_barf_commonlang_scanner)
 trison_add_source_metadev(${PROJECT_SOURCE_DIR}/lib/targetspec/barf_targetspec_parser.trison ${PROJECT_BINARY_DIR}/metadev/lib/targetspec/generated metadev_barf_targetspec_parser dev_barf_targetspec_parser)
@@ -292,8 +292,8 @@ target_link_libraries(barf_preprocessor PUBLIC Strict barf_core)
 
 # dev version of barf_preprocessor
 
-reflex_add_source_dev(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_scanner.reflex ${PROJECT_BINARY_DIR}/dev/lib/preprocessor/generated dev_barf_preprocessor_scanner)
-trison_add_source_dev(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_parser.trison ${PROJECT_BINARY_DIR}/dev/lib/preprocessor/generated dev_barf_preprocessor_parser)
+reflex_add_source_dev(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_scanner.reflex ${PROJECT_SOURCE_DIR}/lib/preprocessor/generated ${PROJECT_BINARY_DIR}/dev/lib/preprocessor/generated dev_barf_preprocessor_scanner)
+trison_add_source_dev(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_parser.trison ${PROJECT_SOURCE_DIR}/lib/preprocessor/generated ${PROJECT_BINARY_DIR}/dev/lib/preprocessor/generated dev_barf_preprocessor_parser)
 
 reflex_add_source_metadev(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_scanner.reflex ${PROJECT_BINARY_DIR}/metadev/lib/preprocessor/generated metadev_barf_preprocessor_scanner dev_barf_preprocessor_scanner)
 trison_add_source_metadev(${PROJECT_SOURCE_DIR}/lib/preprocessor/barf_preprocessor_parser.trison ${PROJECT_BINARY_DIR}/metadev/lib/preprocessor/generated metadev_barf_preprocessor_parser dev_barf_preprocessor_parser)
@@ -365,7 +365,7 @@ target_link_libraries(barf_regex PUBLIC Strict barf_core)
 
 # dev version of barf_regex
 
-trison_add_source_dev(${PROJECT_SOURCE_DIR}/lib/regex/barf_regex_parser.trison ${PROJECT_BINARY_DIR}/dev/lib/regex/generated dev_barf_regex_parser)
+trison_add_source_dev(${PROJECT_SOURCE_DIR}/lib/regex/barf_regex_parser.trison ${PROJECT_SOURCE_DIR}/lib/regex/generated ${PROJECT_BINARY_DIR}/dev/lib/regex/generated dev_barf_regex_parser)
 
 trison_add_source_metadev(${PROJECT_SOURCE_DIR}/lib/regex/barf_regex_parser.trison ${PROJECT_BINARY_DIR}/metadev/lib/regex/generated metadev_barf_regex_parser dev_barf_regex_parser)
 
@@ -614,7 +614,7 @@ target_link_libraries(reflex PUBLIC Strict barf_commonlang_and_targetspec barf_c
 
 # dev version of reflex
 
-trison_add_source_dev(${PROJECT_SOURCE_DIR}/bin/reflex/reflex_parser.trison ${PROJECT_BINARY_DIR}/dev/bin/reflex/generated dev_reflex_parser)
+trison_add_source_dev(${PROJECT_SOURCE_DIR}/bin/reflex/reflex_parser.trison ${PROJECT_SOURCE_DIR}/bin/reflex/generated ${PROJECT_BINARY_DIR}/dev/bin/reflex/generated dev_reflex_parser)
 
 trison_add_source_metadev(${PROJECT_SOURCE_DIR}/bin/reflex/reflex_parser.trison ${PROJECT_BINARY_DIR}/metadev/bin/reflex/generated metadev_reflex_parser dev_reflex_parser)
 
@@ -686,7 +686,7 @@ target_link_libraries(trison PUBLIC Strict barf_commonlang_and_targetspec barf_c
 
 # dev version of trison
 
-trison_add_source_dev(${PROJECT_SOURCE_DIR}/bin/trison/trison_parser.trison ${PROJECT_BINARY_DIR}/dev/bin/trison/generated dev_trison_parser)
+trison_add_source_dev(${PROJECT_SOURCE_DIR}/bin/trison/trison_parser.trison ${PROJECT_SOURCE_DIR}/bin/trison/generated ${PROJECT_BINARY_DIR}/dev/bin/trison/generated dev_trison_parser)
 
 trison_add_source_metadev(${PROJECT_SOURCE_DIR}/bin/trison/trison_parser.trison ${PROJECT_BINARY_DIR}/metadev/bin/trison/generated metadev_trison_parser dev_trison_parser)
 
