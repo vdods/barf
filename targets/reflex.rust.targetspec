@@ -1,0 +1,33 @@
+// 2026.09.30 - Copyright Daniel Palm - Licensed under Apache 2.0
+
+// A self-contained, safe Rust scanner using reflex's deterministic finite
+// automaton.  The generated source has no runtime dependencies.
+
+%add_required_directive output_filename %string
+%add_codespec "source" output_filename
+
+%add_required_directive struct_name %identifier
+%add_optional_directive visibility %string %default "pub"
+%add_optional_directive top_of_file %dumb_code_block
+%add_optional_directive extra_fields %strict_code_block
+%add_optional_directive extra_initializers %strict_code_block
+%add_optional_directive extra_impl_items %strict_code_block
+%add_optional_directive constructor_parameters %strict_code_block
+%add_optional_directive constructor_actions %strict_code_block
+%add_optional_directive reset_for_new_input_actions %strict_code_block
+%add_optional_directive scan_method_parameters %strict_code_block
+%add_optional_directive top_of_scan_method_actions %dumb_code_block
+%add_optional_directive bottom_of_scan_method_actions %dumb_code_block
+%add_optional_directive bottom_of_file %dumb_code_block
+
+%add_optional_directive return_type %string %default "()"
+%add_required_directive rejection_actions %strict_code_block
+%add_optional_directive generate_debug_spew_code
+%add_optional_directive debug_spew_prefix %strict_code_block
+%add_optional_directive generate_timestamps
+
+// Accepted for source compatibility with the cpp target.  The Rust target
+// always emits the compact transition representation and owns an extensible
+// byte buffer, so these do not alter generated code.
+%add_optional_directive small_and_slow
+%add_optional_directive generate_interactive_scanner

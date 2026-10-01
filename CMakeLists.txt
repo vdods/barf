@@ -612,6 +612,22 @@ target_include_directories(
 )
 target_link_libraries(reflex PUBLIC Strict barf_commonlang_and_targetspec barf_core barf_preprocessor barf_regex)
 
+# Compile and run the self-contained Rust scanner example when rustc is
+# available. This target is opt-in, so Rust is not a BARF build dependency.
+find_program(RUSTC_EXECUTABLE rustc HINTS "$ENV{HOME}/.cargo/bin")
+if(RUSTC_EXECUTABLE)
+    add_custom_target(
+        test_reflex_rust
+        COMMAND
+            ${CMAKE_COMMAND} -E env
+            "PATH=$ENV{HOME}/.cargo/bin:$ENV{PATH}"
+            ${PROJECT_SOURCE_DIR}/examples/rust_scanner/run-test.sh
+        DEPENDS reflex
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        COMMENT "Generating, compiling, and testing the self-contained Rust scanner"
+    )
+endif()
+
 # dev version of reflex
 
 trison_add_source_dev(${PROJECT_SOURCE_DIR}/bin/reflex/reflex_parser.trison ${PROJECT_SOURCE_DIR}/bin/reflex/generated ${PROJECT_BINARY_DIR}/dev/bin/reflex/generated dev_reflex_parser)

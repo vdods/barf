@@ -8,7 +8,7 @@ This suite contains programs to supplant the useful, but dated, tools `bison`
     intended to emulate) the C preprocessor, only with formal looping
     constructs, arrays and maps.
 -   `reflex` - A lexical scanner generator.  Produces arbitrary-language scanners
-    using data-driven specifications.  Currently "only" provides a cpp target.
+    using data-driven specifications.  Provides `cpp` and `rust` targets.
 -   `trison` - An LALR parser generator.  Produces arbitrary-language parsers
     using data-driven specifications.  Currently "only" provides a cpp target
     which is an NPDA parser (General LR parser).
@@ -168,6 +168,36 @@ systems, are presented under the `examples` directory.
 -   [interactive_calculator scanner](examples/interactive_calculator/calculator_scanner.reflex)
 -   [noninteractive_calculator parser](examples/noninteractive_calculator/CalcParser.trison)
 -   [noninteractive_calculator scanner](examples/noninteractive_calculator/Scanner.reflex)
+-   [self-contained Rust scanner](examples/rust_scanner/scanner.reflex)
+
+### Rust scanner target
+
+The `rust` target emits one self-contained Rust source file and has no runtime-crate
+dependency. It operates on an owned, appendable byte buffer, so generated scanners
+do not need input lifetimes. The generated implementation contains no `unsafe` code.
+
+At minimum, a Rust scanner specifies its output file, generated struct, return type,
+and rejection behavior:
+
+    %targets rust
+    %target.rust.output_filename "scanner.rs"
+    %target.rust.struct_name Scanner
+    %target.rust.return_type "Token"
+    %target.rust.rejection_actions { return Token::Bad(rejected_atom); }
+
+Rust rule actions can inspect `accepted_string: Vec<u8>` and call scanner methods such
+as `keep_string`, `unaccept`, `unreject`, and `switch_to_state_machine`. Rejection
+actions receive `rejected_string: Vec<u8>` and `rejected_atom: u8`. The generated
+scanner supports reflex state machines, conditionals, case-insensitive and ungreedy
+modes, and both compact and `small_and_slow` source definitions.
+
+If `rustc` is available while configuring BARF, the example can be generated,
+compiled with warnings denied, and executed using:
+
+    cmake --build build --target test_reflex_rust
+
+Rust does not support C/C++ `#line` directives. Invoke `reflex` with
+`--without-line-directives` (or `-l`) when generating the Rust target.
 
 ## Thanks
 
