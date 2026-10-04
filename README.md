@@ -10,8 +10,8 @@ This suite contains programs to supplant the useful, but dated, tools `bison`
 -   `reflex` - A lexical scanner generator.  Produces arbitrary-language scanners
     using data-driven specifications.  Currently "only" provides a cpp target.
 -   `trison` - An LALR parser generator.  Produces arbitrary-language parsers
-    using data-driven specifications.  Currently "only" provides a cpp target
-    which is an NPDA parser (General LR parser).
+    using data-driven specifications.  Provides `cpp` and `rust` NPDA parser
+    targets (General LR parsers).
 
 ## Copyright and License
 
@@ -168,6 +168,37 @@ systems, are presented under the `examples` directory.
 -   [interactive_calculator scanner](examples/interactive_calculator/calculator_scanner.reflex)
 -   [noninteractive_calculator parser](examples/noninteractive_calculator/CalcParser.trison)
 -   [noninteractive_calculator scanner](examples/noninteractive_calculator/Scanner.reflex)
+-   [self-contained Rust parser](examples/rust_parser/parser.trison)
+
+### Rust parser target
+
+The `rust` target emits one self-contained Rust source file with no runtime
+crate dependency. It explores Trison's generated NPDA using token ids, then
+executes semantic actions for the selected parse. Token data therefore does
+not need to implement `Clone`.
+
+    %targets rust
+    %target.rust.output_filename "parser.rs"
+    %target.rust.struct_name Parser
+    %target.rust.token_data_type "Ast"
+    %target.rust.token_data_default "Ast::Empty"
+
+Rust reduction actions are expressions returning `token_data_type`; named rule
+symbols are moved into local variables before each action. Generated parsers
+accept an iterator of `Token` values and the `Nonterminal` to parse. The target
+supports Trison's `%error` recovery transitions, using `token_data_default` for
+synthetic and recovered error-token data. Check
+`parser.has_encountered_error_state()` after a successful parse to see whether
+recovery occurred. The C++ target's custom `%error` recovery callbacks are not
+available yet. Unrecoverable input is returned as
+`ParseError::UnexpectedToken`.
+
+When `rustc` is available, generate, compile, and run the example with:
+
+    cmake --build build --target test_trison_rust
+
+Generate Rust without C/C++ line directives by passing
+`--without-line-directives` (or `-l`) to `trison`.
 
 ## Thanks
 
