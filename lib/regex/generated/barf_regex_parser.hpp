@@ -17,7 +17,7 @@
 #include <vector>
 
 
-#line 18 "../lib/regex/barf_regex_parser.trison"
+#line 10 "../lib/regex/barf_regex_parser.trison"
 
 #if !defined(BARF_REGEX_PARSER_HPP_)
 #define BARF_REGEX_PARSER_HPP_
@@ -47,7 +47,7 @@ namespace Regex {
 /// primary source file to generate a parser (e.g. "the client shouldn't return X from Y"
 /// or "the client must provide a way to X and Y").
 class Parser : 
-#line 34 "../lib/regex/barf_regex_parser.trison"
+#line 26 "../lib/regex/barf_regex_parser.trison"
  protected InputBase 
 #line 53 "../lib/regex/generated/barf_regex_parser.hpp"
 
@@ -304,7 +304,7 @@ public:
     void ResetForNewInput ();
 
 
-#line 36 "../lib/regex/barf_regex_parser.trison"
+#line 28 "../lib/regex/barf_regex_parser.trison"
 
     using InputBase::IsOpen;
     using InputBase::GetFiLoc;
@@ -1018,7 +1018,7 @@ std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser
 // so there would need to be some sort of strong typedef involved for this to be well-defined.
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
-#line 70 "../lib/regex/barf_regex_parser.trison"
+#line 62 "../lib/regex/barf_regex_parser.trison"
 
 } // end of namespace Regex
 } // end of namespace Barf

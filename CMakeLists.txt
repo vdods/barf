@@ -6,12 +6,12 @@ cmake_minimum_required(VERSION 3.18)
 project(barf)
 # NOTE: After cutting a release, you should increment the patch number and append `-DEV` so that
 # the deb packages produced while developing are distinguished from the actual tagged release.
-set(barf_VERSION 2.7.0)
+# NOTE: The variable name barf_PACKAGE_VERSION is used instead of barf_VERSION because when
+# barf_DEVELOPER_MODE is enabled, barf_VERSION gets overwritten by the version of barf
+# that is found by the find_package(barf) command.
+set(barf_PACKAGE_VERSION 2.8.0)
 
-string(REPLACE "." ";" VERSION_LIST ${barf_VERSION})
-list(GET VERSION_LIST 0 barf_VERSION_MAJOR)
-list(GET VERSION_LIST 1 barf_VERSION_MINOR)
-list(GET VERSION_LIST 2 barf_VERSION_PATCH)
+string(REPLACE "." ";" VERSION_LIST ${barf_PACKAGE_VERSION})
 
 # Set and require the C++14 standard
 set(CMAKE_CXX_STANDARD 14)
@@ -128,7 +128,7 @@ add_library(barf_commonlang_and_targetspec ${barf_commonlang_and_targetspec_SOUR
 target_compile_definitions(
     barf_commonlang_and_targetspec
     PUBLIC
-    PACKAGE_VERSION="${barf_VERSION}"
+    PACKAGE_VERSION="${barf_PACKAGE_VERSION}"
     HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
 )
 target_include_directories(
@@ -162,7 +162,7 @@ add_dependencies(dev_barf_commonlang_and_targetspec reflex trison)
 target_compile_definitions(
     dev_barf_commonlang_and_targetspec
     PUBLIC
-    PACKAGE_VERSION="${barf_VERSION}"
+    PACKAGE_VERSION="${barf_PACKAGE_VERSION}"
     HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
 )
 target_include_directories(
@@ -219,7 +219,7 @@ add_library(barf_core ${barf_core_SOURCES})
 target_compile_definitions(
     barf_core
     PUBLIC
-    PACKAGE_VERSION="${barf_VERSION}"
+    PACKAGE_VERSION="${barf_PACKAGE_VERSION}"
     HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
 )
 target_include_directories(
@@ -235,7 +235,7 @@ add_library(dev_barf_core EXCLUDE_FROM_ALL ${barf_core_SOURCES})
 target_compile_definitions(
     dev_barf_core
     PUBLIC
-    PACKAGE_VERSION="${barf_VERSION}"
+    PACKAGE_VERSION="${barf_PACKAGE_VERSION}"
     HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
 )
 target_include_directories(
@@ -279,7 +279,7 @@ add_library(barf_preprocessor ${barf_preprocessor_SOURCES} ${barf_preprocessor_G
 target_compile_definitions(
     barf_preprocessor
     PUBLIC
-    PACKAGE_VERSION="${barf_VERSION}"
+    PACKAGE_VERSION="${barf_PACKAGE_VERSION}"
     HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
 )
 target_include_directories(
@@ -310,7 +310,7 @@ add_dependencies(dev_barf_preprocessor reflex trison)
 target_compile_definitions(
     dev_barf_preprocessor
     PUBLIC
-    PACKAGE_VERSION="${barf_VERSION}"
+    PACKAGE_VERSION="${barf_PACKAGE_VERSION}"
     HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
 )
 target_include_directories(
@@ -352,7 +352,7 @@ add_library(barf_regex ${barf_regex_SOURCES} ${barf_regex_GENERATED_SOURCES})
 target_compile_definitions(
     barf_regex
     PUBLIC
-    PACKAGE_VERSION="${barf_VERSION}"
+    PACKAGE_VERSION="${barf_PACKAGE_VERSION}"
     HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
 )
 target_include_directories(
@@ -379,7 +379,7 @@ add_dependencies(dev_barf_regex trison)
 target_compile_definitions(
     dev_barf_regex
     PUBLIC
-    PACKAGE_VERSION="${barf_VERSION}"
+    PACKAGE_VERSION="${barf_PACKAGE_VERSION}"
     HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
 )
 target_include_directories(
@@ -400,7 +400,7 @@ target_link_libraries(dev_barf_regex PUBLIC Strict dev_barf_core)
 #
 
 if(BUILD_barftest)
-    find_package(lvd REQUIRED 0.8.0)
+    find_package(lvd REQUIRED 0.13.0)
 
     if(barf_DEVELOPER_MODE)
         reflex_add_source(${barf_SOURCE_DIR}/bin/barftest/text/Scanner.reflex ${barf_SOURCE_DIR}/bin/barftest/text barftest_text_Scanner "${PROJECT_BINARY_DIR}")
@@ -523,7 +523,7 @@ if(BUILD_barftest)
     )
     add_executable(barftest ${barftest_SOURCES})
     target_include_directories(barftest PUBLIC ${barf_SOURCE_DIR}/bin) # So includes look like #include "barftest/sem/Xyz.hpp"
-    target_compile_definitions(barftest PUBLIC PACKAGE_VERSION="${barf_VERSION}")
+    target_compile_definitions(barftest PUBLIC PACKAGE_VERSION="${barf_PACKAGE_VERSION}")
     target_link_libraries(barftest PUBLIC Strict lvd)
 endif()
 
@@ -543,7 +543,7 @@ add_executable(bpp ${BPP_SOURCES})
 target_compile_definitions(
     bpp
     PUBLIC
-    PACKAGE_VERSION="${barf_VERSION}"
+    PACKAGE_VERSION="${barf_PACKAGE_VERSION}"
     HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
 )
 target_include_directories(
@@ -561,7 +561,7 @@ add_executable(dev_bpp EXCLUDE_FROM_ALL ${BPP_SOURCES})
 target_compile_definitions(
     dev_bpp
     PUBLIC
-    PACKAGE_VERSION="${barf_VERSION}"
+    PACKAGE_VERSION="${barf_PACKAGE_VERSION}"
     HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
 )
 target_include_directories(
@@ -601,7 +601,7 @@ add_executable(reflex ${reflex_SOURCES} ${reflex_GENERATED_SOURCES})
 target_compile_definitions(
     reflex
     PUBLIC
-    PACKAGE_VERSION="${barf_VERSION}"
+    PACKAGE_VERSION="${barf_PACKAGE_VERSION}"
     HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
 )
 target_include_directories(
@@ -627,7 +627,7 @@ add_dependencies(dev_reflex trison)
 target_compile_definitions(
     dev_reflex
     PUBLIC
-    PACKAGE_VERSION="${barf_VERSION}"
+    PACKAGE_VERSION="${barf_PACKAGE_VERSION}"
     HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
 )
 target_include_directories(
@@ -673,7 +673,7 @@ set(trison_GENERATED_SOURCES
 add_executable(trison ${trison_SOURCES} ${trison_GENERATED_SOURCES})
 target_compile_definitions(
     trison
-    PUBLIC PACKAGE_VERSION="${barf_VERSION}"
+    PUBLIC PACKAGE_VERSION="${barf_PACKAGE_VERSION}"
     HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
 )
 target_include_directories(
@@ -699,7 +699,7 @@ add_dependencies(dev_trison trison)
 target_compile_definitions(
     dev_trison
     PUBLIC
-    PACKAGE_VERSION="${barf_VERSION}"
+    PACKAGE_VERSION="${barf_PACKAGE_VERSION}"
     HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}"
 )
 # It's a little hacky to include ${PROJECT_BINARY_DIR}/dev since it's not separated like
@@ -725,7 +725,7 @@ if(barf_DEVELOPER_MODE)
     # This is probably not strictly needed, but might as well include anyway.
     # Could be solved by having these propagate automatically through the public
     # or interface parts of the dependent cmake targets
-    target_compile_definitions(playground PUBLIC PACKAGE_VERSION="${barf_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
+    target_compile_definitions(playground PUBLIC PACKAGE_VERSION="${barf_PACKAGE_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
     target_link_libraries(playground PUBLIC Strict barf_regex)
 
     # dev version of playground
@@ -734,7 +734,7 @@ if(barf_DEVELOPER_MODE)
     # This is probably not strictly needed, but might as well include anyway.
     # Could be solved by having these propagate automatically through the public
     # or interface parts of the dependent cmake targets
-    target_compile_definitions(dev_playground PUBLIC PACKAGE_VERSION="${barf_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
+    target_compile_definitions(dev_playground PUBLIC PACKAGE_VERSION="${barf_PACKAGE_VERSION}" HARDCODED_BARF_TARGETS_DIR="${HARDCODED_BARF_TARGETS_DIR}")
     target_link_libraries(dev_playground PUBLIC Strict dev_barf_regex)
 endif()
 
@@ -926,22 +926,22 @@ endif()
 
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Victor Dods")
 
-# NOTE: Normally setting barf_VERSION_MAJOR, MINOR, PATCH would go here, but for some reason,
-# barf_VERSION is being set to the empty string somewhere between the beginning of this file
-# and here.  So it's moved up to the top.
+list(GET VERSION_LIST 0 barf_PACKAGE_VERSION_MAJOR)
+list(GET VERSION_LIST 1 barf_PACKAGE_VERSION_MINOR)
+list(GET VERSION_LIST 2 barf_PACKAGE_VERSION_PATCH)
 
-set(CPACK_PACKAGE_VERSION "${barf_VERSION_MAJOR}.${barf_VERSION_MINOR}.${barf_VERSION_PATCH}")
-set(CPACK_PACKAGE_VERSION_MAJOR "${barf_VERSION_MAJOR}")
-set(CPACK_PACKAGE_VERSION_MINOR "${barf_VERSION_MINOR}")
-set(CPACK_PACKAGE_VERSION_PATCH "${barf_VERSION_PATCH}")
+set(CPACK_PACKAGE_VERSION "${barf_PACKAGE_VERSION_MAJOR}.${barf_PACKAGE_VERSION_MINOR}.${barf_PACKAGE_VERSION_PATCH}")
+set(CPACK_PACKAGE_VERSION_MAJOR "${barf_PACKAGE_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR "${barf_PACKAGE_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH "${barf_PACKAGE_VERSION_PATCH}")
 
 # set(CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.html")
 set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE.txt")
 set(CPACK_RESOURCE_FILE_README "${PROJECT_SOURCE_DIR}/README.md")
 # set(CPACK_RESOURCE_FILE_WELCOME "${PROJECT_SOURCE_DIR}/README.html")
 
-set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${barf_VERSION}")
-set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-${barf_VERSION}")
+set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${barf_PACKAGE_VERSION}")
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-${barf_PACKAGE_VERSION}")
 
 set(CPACK_SOURCE_IGNORE_FILES "${PROJECT_SOURCE_DIR}/build/;${PROJECT_SOURCE_DIR}/.git/;${PROJECT_SOURCE_DIR}/.gitignore;${PROJECT_SOURCE_DIR}/barf.kdev4;${PROJECT_SOURCE_DIR}/.kdev4;${PROJECT_SOURCE_DIR}/dev/calc/build/;${PROJECT_SOURCE_DIR}/test/build/")
 

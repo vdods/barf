@@ -17,7 +17,7 @@
 #include <vector>
 
 
-#line 18 "../lib/targetspec/barf_targetspec_parser.trison"
+#line 10 "../lib/targetspec/barf_targetspec_parser.trison"
 
 #if !defined(BARF_TARGETSPEC_PARSER_HPP_)
 #define BARF_TARGETSPEC_PARSER_HPP_
@@ -337,7 +337,7 @@ public:
     ParserReturnCode Parse (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::root);
 
 
-#line 39 "../lib/targetspec/barf_targetspec_parser.trison"
+#line 31 "../lib/targetspec/barf_targetspec_parser.trison"
 
     inline FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
 
@@ -1002,7 +1002,7 @@ std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser
 // so there would need to be some sort of strong typedef involved for this to be well-defined.
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
-#line 55 "../lib/targetspec/barf_targetspec_parser.trison"
+#line 47 "../lib/targetspec/barf_targetspec_parser.trison"
 
 } // end of namespace Targetspec
 } // end of namespace Barf

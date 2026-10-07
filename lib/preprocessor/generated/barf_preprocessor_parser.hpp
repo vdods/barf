@@ -17,7 +17,7 @@
 #include <vector>
 
 
-#line 18 "../lib/preprocessor/barf_preprocessor_parser.trison"
+#line 10 "../lib/preprocessor/barf_preprocessor_parser.trison"
 
 #if !defined(BARF_PREPROCESSOR_PARSER_HPP_)
 #define BARF_PREPROCESSOR_PARSER_HPP_
@@ -368,7 +368,7 @@ public:
     ParserReturnCode Parse (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::body);
 
 
-#line 38 "../lib/preprocessor/barf_preprocessor_parser.trison"
+#line 30 "../lib/preprocessor/barf_preprocessor_parser.trison"
 
     FiLoc const &GetFiLoc () const;
 
@@ -1032,7 +1032,7 @@ std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser
 // so there would need to be some sort of strong typedef involved for this to be well-defined.
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
-#line 53 "../lib/preprocessor/barf_preprocessor_parser.trison"
+#line 45 "../lib/preprocessor/barf_preprocessor_parser.trison"
 
 } // end of namespace Preprocessor
 } // end of namespace Barf

@@ -535,7 +535,7 @@ private:
 #endif // !defined(ReflexCpp_namespace_)
 
 
-#line 19 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 11 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
 #if !defined(BARF_COMMONLANG_SCANNER_HPP_)
 #define BARF_COMMONLANG_SCANNER_HPP_
@@ -558,7 +558,7 @@ namespace CommonLang {
 #line 559 "../lib/commonlang/generated/barf_commonlang_scanner.hpp"
 
 class Scanner : private ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_, 
-#line 39 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 31 "../lib/commonlang/barf_commonlang_scanner.reflex"
  protected InputBase 
 #line 564 "../lib/commonlang/generated/barf_commonlang_scanner.hpp"
 
@@ -586,7 +586,7 @@ public:
     }; // end of struct Scanner::StateMachine
 
 
-#line 40 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 32 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
     struct Token
     {
@@ -666,7 +666,7 @@ public:
     void ResetForNewInput ();
 
     Scanner::Token::Type Scan (
-#line 85 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 77 "../lib/commonlang/barf_commonlang_scanner.reflex"
  Ast::Base *&token 
 #line 672 "../lib/commonlang/generated/barf_commonlang_scanner.hpp"
 ) throw();
@@ -674,7 +674,7 @@ public:
 public:
 
 
-#line 86 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 78 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
     using InputBase::IsOpen;
     using InputBase::GetFiLoc;
@@ -739,7 +739,7 @@ private:
 }; // end of class Scanner
 
 
-#line 107 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 99 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
 ostream &operator << (ostream &stream, Scanner::Token::Type scanner_token_type);
 

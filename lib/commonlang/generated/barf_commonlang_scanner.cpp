@@ -10,7 +10,7 @@
 #define REFLEX_CPP_DEBUG_CODE_(spew_code) if (DebugSpewIsEnabled()) { spew_code; }
 
 
-#line 120 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 112 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
 #include <cstdlib>
 #include <sstream>
@@ -197,7 +197,7 @@ void Scanner::SwitchToStateMachine (StateMachine::Name state_machine)
         (false && "invalid StateMachine::Name"));
     REFLEX_CPP_DEBUG_CODE_(
         *DebugSpewStream() << 
-#line 277 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 269 "../lib/commonlang/barf_commonlang_scanner.reflex"
 "CommonLang::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 203 "../lib/commonlang/generated/barf_commonlang_scanner.cpp"
  << " switching to state machine "
@@ -219,7 +219,7 @@ void Scanner::ResetForNewInput ()
 {
     REFLEX_CPP_DEBUG_CODE_(
         *DebugSpewStream() << 
-#line 277 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 269 "../lib/commonlang/barf_commonlang_scanner.reflex"
 "CommonLang::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 225 "../lib/commonlang/generated/barf_commonlang_scanner.cpp"
  << " executing reset-for-new-input actions and switching to state machine "
@@ -236,7 +236,7 @@ void Scanner::ResetForNewInput ()
     assert(CurrentStateMachine() == StateMachine::START_);
 
 
-#line 266 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 258 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
     m_is_in_preamble = true;
     m_regex_paren_level = 0;
@@ -246,13 +246,13 @@ void Scanner::ResetForNewInput ()
 }
 
 Scanner::Token::Type Scanner::Scan (
-#line 85 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 77 "../lib/commonlang/barf_commonlang_scanner.reflex"
  Ast::Base *&token 
 #line 252 "../lib/commonlang/generated/barf_commonlang_scanner.cpp"
 ) throw()
 {
 
-#line 246 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 238 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
     assert(token == NULL);
 
@@ -287,7 +287,7 @@ Scanner::Token::Type Scanner::Scan (
 
             REFLEX_CPP_DEBUG_CODE_(
                 *DebugSpewStream() << 
-#line 277 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 269 "../lib/commonlang/barf_commonlang_scanner.reflex"
 "CommonLang::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 293 "../lib/commonlang/generated/barf_commonlang_scanner.cpp"
  << " rejecting string ";
@@ -302,7 +302,7 @@ Scanner::Token::Type Scanner::Scan (
             do
             {
 
-#line 263 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 255 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
     EmitError("unrecognized character " + CharLiteral(rejected_atom), GetFiLoc());
 
@@ -318,7 +318,7 @@ Scanner::Token::Type Scanner::Scan (
 
             REFLEX_CPP_DEBUG_CODE_(
                 *DebugSpewStream() << 
-#line 277 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 269 "../lib/commonlang/barf_commonlang_scanner.reflex"
 "CommonLang::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 324 "../lib/commonlang/generated/barf_commonlang_scanner.cpp"
  << " accepting string ";
@@ -333,7 +333,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 0:
                 {
 
-#line 414 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 406 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         IncrementLineNumber(NewlineCount(accepted_string));
         if (token != NULL)
@@ -348,7 +348,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 1:
                 {
 
-#line 422 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 414 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         IncrementLineNumber(NewlineCount(accepted_string));
         EmitWarning("unterminated block comment", GetFiLoc());
@@ -364,7 +364,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 2:
                 {
 
-#line 492 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 484 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         SwitchToStateMachine(StateMachine::MAIN);
@@ -378,7 +378,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 3:
                 {
 
-#line 499 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 491 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         EmitError("unterminated character literal", GetFiLoc());
         assert(token != NULL);
@@ -395,7 +395,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 4:
                 {
 
-#line 509 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 501 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         EmitError("malformed character literal", GetFiLoc());
         if (accepted_string[0] == '\n')
@@ -414,7 +414,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 5:
                 {
 
-#line 434 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 426 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(accepted_string.length() >= 2);
         assert(accepted_string[0] == '\\');
@@ -432,7 +432,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 6:
                 {
 
-#line 445 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 437 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(accepted_string.length() >= 3);
         assert(accepted_string[0] == '\\');
@@ -451,7 +451,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 7:
                 {
 
-#line 457 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 449 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(accepted_string.length() == 2);
         assert(accepted_string[0] == '\\');
@@ -468,7 +468,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 8:
                 {
 
-#line 467 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 459 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(accepted_string.length() == 1);
         token = new Ast::Char(Uint8(accepted_string[0]), GetFiLoc());
@@ -482,7 +482,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 9:
                 {
 
-#line 474 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 466 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         EmitError("unterminated character literal", GetFiLoc());
         return Token::END_OF_FILE;
@@ -495,7 +495,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 10:
                 {
 
-#line 480 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 472 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         EmitError("unexpected character " + CharLiteral(accepted_string[0]) + " in character literal", GetFiLoc());
         if (accepted_string[0] == '\n')
@@ -511,7 +511,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 11:
                 {
 
-#line 749 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 741 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         IncrementLineNumber(NewlineCount(accepted_string));
@@ -526,7 +526,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 12:
                 {
 
-#line 757 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 749 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         delete token;
@@ -543,7 +543,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 13:
                 {
 
-#line 658 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 650 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         assert(accepted_string.length() >= 2);
@@ -562,7 +562,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 14:
                 {
 
-#line 670 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 662 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         EmitError("unterminated dumb code block (looking for %} delimiter)", GetFiLoc());
         IncrementLineNumber(NewlineCount(accepted_string));
@@ -579,7 +579,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 15:
                 {
 
-#line 330 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 322 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         m_return_state = StateMachine::MAIN;
         SwitchToStateMachine(StateMachine::BLOCK_COMMENT);
@@ -592,7 +592,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 16:
                 {
 
-#line 336 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 328 "../lib/commonlang/barf_commonlang_scanner.reflex"
  
 #line 598 "../lib/commonlang/generated/barf_commonlang_scanner.cpp"
 
@@ -602,7 +602,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 17:
                 {
 
-#line 339 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 331 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         SwitchToStateMachine(StateMachine::CHAR_LITERAL_GUTS);
     
@@ -614,7 +614,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 18:
                 {
 
-#line 344 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 336 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         token = new Ast::String(GetFiLoc());
         SwitchToStateMachine(StateMachine::STRING_LITERAL_GUTS);
@@ -627,7 +627,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 19:
                 {
 
-#line 350 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 342 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         token = new Ast::String(GetFiLoc());
         SwitchToStateMachine(StateMachine::REGULAR_EXPRESSION);
@@ -640,7 +640,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 20:
                 {
 
-#line 356 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 348 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         token = new Ast::DumbCodeBlock(GetFiLoc());
         SwitchToStateMachine(StateMachine::DUMB_CODE_BLOCK);
@@ -653,7 +653,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 21:
                 {
 
-#line 362 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 354 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         token = new Ast::StrictCodeBlock(GetFiLoc());
         SwitchToStateMachine(StateMachine::STRICT_CODE_BLOCK);
@@ -666,7 +666,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 22:
                 {
 
-#line 368 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 360 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         return Scanner::ParseDirective(accepted_string, token);
     
@@ -678,7 +678,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 23:
                 {
 
-#line 373 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 365 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         token = new Ast::ThrowAway(GetFiLoc());
         m_is_in_preamble = false;
@@ -692,7 +692,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 24:
                 {
 
-#line 380 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 372 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         token = new Ast::Id(accepted_string, GetFiLoc());
         return Token::ID;
@@ -705,7 +705,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 25:
                 {
 
-#line 386 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 378 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         return Token::Type(accepted_string[0]);
     
@@ -717,7 +717,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 26:
                 {
 
-#line 390 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 382 "../lib/commonlang/barf_commonlang_scanner.reflex"
  /* ignore all whitespace */ 
 #line 723 "../lib/commonlang/generated/barf_commonlang_scanner.cpp"
 
@@ -727,7 +727,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 27:
                 {
 
-#line 393 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 385 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         IncrementLineNumber();
         if (m_is_in_preamble)
@@ -741,7 +741,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 28:
                 {
 
-#line 400 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 392 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         return Token::END_OF_FILE;
     
@@ -753,7 +753,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 29:
                 {
 
-#line 405 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 397 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         EmitError("unexpected character " + CharLiteral(accepted_string[0]), GetFiLoc());
         return Token::BAD_TOKEN;
@@ -766,7 +766,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 30:
                 {
 
-#line 576 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 568 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         if (m_regex_paren_level == 0)
@@ -785,7 +785,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 31:
                 {
 
-#line 588 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 580 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         ++m_regex_paren_level;
@@ -799,7 +799,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 32:
                 {
 
-#line 595 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 587 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         Dsc<Ast::String *>(token)->AppendText(accepted_string);
@@ -814,7 +814,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 33:
                 {
 
-#line 603 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 595 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         IncrementLineNumber(NewlineCount(accepted_string));
@@ -828,7 +828,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 34:
                 {
 
-#line 610 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 602 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         delete token;
@@ -844,7 +844,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 35:
                 {
 
-#line 622 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 614 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         Dsc<Ast::String *>(token)->AppendText(accepted_string);
@@ -861,7 +861,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 36:
                 {
 
-#line 632 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 624 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         Dsc<Ast::String *>(token)->AppendText(accepted_string);
@@ -875,7 +875,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 37:
                 {
 
-#line 639 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 631 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         IncrementLineNumber(NewlineCount(accepted_string));
@@ -889,7 +889,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 38:
                 {
 
-#line 646 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 638 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         delete token;
@@ -905,7 +905,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 39:
                 {
 
-#line 683 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 675 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         if (m_code_block_bracket_level == 0)
@@ -924,7 +924,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 40:
                 {
 
-#line 695 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 687 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         Dsc<Ast::CodeBlock *>(token)->AppendText(accepted_string);
@@ -938,7 +938,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 41:
                 {
 
-#line 702 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 694 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         Dsc<Ast::CodeBlock *>(token)->AppendText(accepted_string);
@@ -952,7 +952,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 42:
                 {
 
-#line 709 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 701 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         Dsc<Ast::CodeBlock *>(token)->AppendText(accepted_string);
@@ -966,7 +966,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 43:
                 {
 
-#line 716 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 708 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         Dsc<Ast::CodeBlock *>(token)->AppendText(accepted_string);
@@ -981,7 +981,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 44:
                 {
 
-#line 724 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 716 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         Dsc<Ast::CodeBlock *>(token)->AppendText(accepted_string);
@@ -994,7 +994,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 45:
                 {
 
-#line 730 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 722 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         IncrementLineNumber(NewlineCount(accepted_string));
@@ -1008,7 +1008,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 46:
                 {
 
-#line 737 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 729 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         delete token;
@@ -1024,7 +1024,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 47:
                 {
 
-#line 524 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 516 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         IncrementLineNumber(NewlineCount(accepted_string));
@@ -1070,7 +1070,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 48:
                 {
 
-#line 563 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 555 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         EmitError("unterminated string literal", GetFiLoc());
         IncrementLineNumber(NewlineCount(accepted_string));
@@ -1087,7 +1087,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 49:
                 {
 
-#line 770 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 762 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         Dsc<Ast::StrictCodeBlock *>(token)->AppendText(accepted_string);
@@ -1102,7 +1102,7 @@ Scanner::Token::Type Scanner::Scan (
                 case 50:
                 {
 
-#line 778 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 770 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
         assert(token != NULL);
         delete token;
@@ -1122,7 +1122,7 @@ Scanner::Token::Type Scanner::Scan (
     }
 
 
-#line 249 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 241 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
     assert(false && "you didn't handle EOF properly");
     return Token::BAD_END_OF_FILE;
@@ -1133,7 +1133,7 @@ Scanner::Token::Type Scanner::Scan (
 void Scanner::KeepString ()
 {
     REFLEX_CPP_DEBUG_CODE_(*DebugSpewStream() << 
-#line 277 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 269 "../lib/commonlang/barf_commonlang_scanner.reflex"
 "CommonLang::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 1139 "../lib/commonlang/generated/barf_commonlang_scanner.cpp"
  << " keeping string" << std::endl)
@@ -1143,7 +1143,7 @@ void Scanner::KeepString ()
 void Scanner::Unaccept (std::uint32_t unaccept_char_count)
 {
     REFLEX_CPP_DEBUG_CODE_(*DebugSpewStream() << 
-#line 277 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 269 "../lib/commonlang/barf_commonlang_scanner.reflex"
 "CommonLang::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 1149 "../lib/commonlang/generated/barf_commonlang_scanner.cpp"
  << " unaccepting " << unaccept_char_count << " char" << (unaccept_char_count == 1 ? '\0' : 's') << std::endl)
@@ -1153,7 +1153,7 @@ void Scanner::Unaccept (std::uint32_t unaccept_char_count)
 void Scanner::Unreject (std::uint32_t unreject_char_count)
 {
     REFLEX_CPP_DEBUG_CODE_(*DebugSpewStream() << 
-#line 277 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 269 "../lib/commonlang/barf_commonlang_scanner.reflex"
 "CommonLang::Scanner" << (GetFiLoc().IsValid() ? " ("+GetFiLoc().AsString()+")" : g_empty_string) << ":"
 #line 1159 "../lib/commonlang/generated/barf_commonlang_scanner.cpp"
  << " unrejecting " << unreject_char_count << " char" << (unreject_char_count == 1 ? '\0' : 's') << std::endl)
@@ -16717,7 +16717,7 @@ std::uint32_t const Scanner::ms_accept_handler_count_ = sizeof(Scanner::ms_accep
 // ///////////////////////////////////////////////////////////////////////
 
 
-#line 253 "../lib/commonlang/barf_commonlang_scanner.reflex"
+#line 245 "../lib/commonlang/barf_commonlang_scanner.reflex"
 
 } // end of namespace CommonLang
 } // end of namespace Barf

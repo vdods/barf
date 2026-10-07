@@ -17,7 +17,7 @@
 #include <vector>
 
 
-#line 19 "../bin/reflex/reflex_parser.trison"
+#line 11 "../bin/reflex/reflex_parser.trison"
 
 #if !defined(REFLEX_PARSER_HPP_)
 #define REFLEX_PARSER_HPP_
@@ -363,7 +363,7 @@ public:
     ParserReturnCode Parse (Ast::Base * *return_token, Nonterminal::Name nonterminal_to_parse = Nonterminal::root);
 
 
-#line 52 "../bin/reflex/reflex_parser.trison"
+#line 44 "../bin/reflex/reflex_parser.trison"
 
     FiLoc const &GetFiLoc () const { return m_scanner.GetFiLoc(); }
     CommonLang::TargetMap &GetTargetMap () { assert(m_target_map != NULL); return *m_target_map; }
@@ -1035,7 +1035,7 @@ std::ostream &operator << (std::ostream &stream, Parser::ParserReturnCode parser
 // so there would need to be some sort of strong typedef involved for this to be well-defined.
 std::ostream &operator << (std::ostream &stream, Parser::Token const &token);
 
-#line 75 "../bin/reflex/reflex_parser.trison"
+#line 67 "../bin/reflex/reflex_parser.trison"
 
 } // end of namespace Reflex
 

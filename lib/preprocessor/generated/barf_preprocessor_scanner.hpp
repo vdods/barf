@@ -535,7 +535,7 @@ private:
 #endif // !defined(ReflexCpp_namespace_)
 
 
-#line 19 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
+#line 11 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
 #if !defined(BARF_PREPROCESSOR_SCANNER_HPP_)
 #define BARF_PREPROCESSOR_SCANNER_HPP_
@@ -555,7 +555,7 @@ class Text;
 #line 556 "../lib/preprocessor/generated/barf_preprocessor_scanner.hpp"
 
 class Scanner : private ReflexCpp_::AutomatonApparatus_FastAndBig_Noninteractive_, 
-#line 36 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
+#line 28 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
  protected InputBase 
 #line 561 "../lib/preprocessor/generated/barf_preprocessor_scanner.hpp"
 
@@ -577,7 +577,7 @@ public:
     }; // end of struct Scanner::StateMachine
 
 
-#line 37 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
+#line 29 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
 
 #line 584 "../lib/preprocessor/generated/barf_preprocessor_scanner.hpp"
@@ -618,7 +618,7 @@ public:
 public:
 
 
-#line 39 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
+#line 31 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
     using InputBase::IsOpen;
     using InputBase::GetFiLoc;
@@ -680,7 +680,7 @@ private:
 }; // end of class Scanner
 
 
-#line 57 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
+#line 49 "../lib/preprocessor/barf_preprocessor_scanner.reflex"
 
 } // end of namespace Preprocessor
 } // end of namespace Barf
