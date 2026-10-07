@@ -515,6 +515,7 @@ Some of these are super old and may no longer apply.
 
 ### Trison To-dos
 
+-   it should be possible to define the terminal data type for `%end`.
 -   pass reference instead of double pointer to Parse
 -   refactor the DPDA generation to be simpler and faster (difficult)
 -   if possible, make the dpda.states file put the states' rules in order.
