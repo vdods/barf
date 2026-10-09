@@ -1,0 +1,106 @@
+// 2026.09.30 - Copyright Daniel Palm - Licensed under Apache 2.0
+
+// A small executable fixture for the self-contained Rust target.
+
+%targets rust
+
+%target.rust.output_filename "scanner.rs"
+%target.rust.struct_name Scanner
+%target.rust.top_of_file %{
+#[derive(Debug, PartialEq)]
+pub enum Token {
+    Integer(u64),
+    Word(String),
+    Quoted(String),
+    A,
+    CaseInsensitive,
+    Plus,
+    End,
+    Bad(u8),
+}
+%}
+%target.rust.return_type "Token"
+%target.rust.rejection_actions {
+    return Token::Bad(rejected_atom);
+}
+%target.rust.bottom_of_scan_method_actions %{
+        Token::End
+%}
+
+%start_with_state_machine MAIN
+
+%%
+
+%state_machine MAIN
+:
+    (ab)
+    %target.rust {
+        self.unaccept(1);
+        return Token::A;
+    }
+|
+    ([0-9]+)
+    %target.rust {
+        let text = std::str::from_utf8(&accepted_string).expect("integer literals are ASCII");
+        return Token::Integer(text.parse().expect("valid integer literal"));
+    }
+|
+    ([a-zA-Z_][a-zA-Z0-9_]*)
+    %target.rust {
+        return Token::Word(String::from_utf8(accepted_string).expect("words are ASCII"));
+    }
+|
+    (\+)
+    %target.rust {
+        return Token::Plus;
+    }
+|
+    (~)
+    %target.rust {
+        self.switch_to_state_machine(StateMachine::CASE_INSENSITIVE);
+    }
+|
+    ([ \t\n]+)
+    %target.rust {
+        // Skip whitespace and continue scanning.
+    }
+|
+    (")
+    %target.rust {
+        self.keep_string();
+        self.switch_to_state_machine(StateMachine::STRING);
+    }
+|
+    (\z)
+    %target.rust {
+        return Token::End;
+    }
+;
+
+%state_machine STRING %ungreedy
+:
+    ([^"]+)
+    %target.rust {
+        self.keep_string();
+    }
+|
+    (")
+    %target.rust {
+        self.switch_to_state_machine(StateMachine::MAIN);
+        return Token::Quoted(String::from_utf8(accepted_string).expect("quoted text is UTF-8"));
+    }
+|
+    (\z)
+    %target.rust {
+        return Token::Bad(0);
+    }
+;
+
+%state_machine CASE_INSENSITIVE %case_insensitive
+:
+    (hello)
+    %target.rust {
+        self.switch_to_state_machine(StateMachine::MAIN);
+        return Token::CaseInsensitive;
+    }
+;
