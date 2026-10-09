@@ -684,6 +684,19 @@ target_include_directories(
 )
 target_link_libraries(trison PUBLIC Strict barf_commonlang_and_targetspec barf_core barf_preprocessor)
 
+# Rust is optional; this target generates, compiles, and runs the standalone
+# parser example without making rustc a BARF build dependency.
+find_program(RUSTC_EXECUTABLE rustc HINTS "$ENV{HOME}/.cargo/bin")
+if(RUSTC_EXECUTABLE)
+    add_custom_target(
+        test_trison_rust
+        COMMAND ${CMAKE_COMMAND} -E env "PATH=$ENV{HOME}/.cargo/bin:$ENV{PATH}" ${PROJECT_SOURCE_DIR}/examples/rust_parser/run-test.sh
+        DEPENDS trison
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        COMMENT "Generating, compiling, and testing the self-contained Rust parser"
+    )
+endif()
+
 # dev version of trison
 
 trison_add_source_dev(${PROJECT_SOURCE_DIR}/bin/trison/trison_parser.trison ${PROJECT_SOURCE_DIR}/bin/trison/generated ${PROJECT_BINARY_DIR}/dev/bin/trison/generated dev_trison_parser)

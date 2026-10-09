@@ -1,0 +1,19 @@
+// 2026.10.02 - Copyright Daniel Palm - Licensed under Apache 2.0
+
+// A self-contained Rust NPDA parser.  The generated source has no runtime
+// dependencies and separates recognition from semantic-action execution so
+// token data does not need to implement Clone while parser paths are explored.
+
+%add_required_directive output_filename %string
+%add_codespec "source" output_filename
+
+%add_required_directive struct_name %identifier
+%add_optional_directive visibility %string %default "pub"
+%add_optional_directive top_of_file %dumb_code_block
+%add_optional_directive extra_impl_items %strict_code_block
+%add_optional_directive bottom_of_file %dumb_code_block
+
+%add_optional_directive token_data_type %string %default "()"
+%add_optional_directive token_data_default %string %default "()"
+%add_optional_directive max_parser_configurations %string %default "100000"
+%add_optional_directive generate_timestamps

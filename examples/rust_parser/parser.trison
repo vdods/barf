@@ -1,0 +1,36 @@
+// 2026.10.02 - Copyright Daniel Palm - Licensed under Apache 2.0
+
+%targets rust
+%target.rust.output_filename "parser.rs"
+%target.rust.struct_name Parser
+%target.rust.token_data_type "i64"
+%target.rust.token_data_default "0"
+
+%terminal INTEGER '(' ')' '+' '*'
+%prec.left %default
+%prec.left ADDITIVE
+%prec.left MULTIPLICATIVE
+%default_parse_nonterminal input
+
+%%
+
+%nonterminal input
+:
+    expression:value %end
+    %target.rust { value }
+;
+
+%nonterminal expression
+:
+    INTEGER:value
+    %target.rust { value }
+|
+    '(' expression:value ')'
+    %target.rust { value }
+|
+    expression:lhs '+' expression:rhs %prec ADDITIVE
+    %target.rust { lhs + rhs }
+|
+    expression:lhs '*' expression:rhs %prec MULTIPLICATIVE
+    %target.rust { lhs * rhs }
+;
